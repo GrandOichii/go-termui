@@ -1,0 +1,6 @@
+examples_path=examples
+for i in $(ls $examples_path)
+do
+echo running $examples_path/$i/$i.go ...
+go run $examples_path/$i/$i.go
+done
