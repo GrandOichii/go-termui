@@ -38,19 +38,23 @@ var (
 	colorMap = map[string]nc.Char{}
 )
 
+// CCT message (curses color text)
 type CCTMessage struct {
 	strings []string
 	colors  []nc.Char
 }
 
+// Returns the pair at i
 func (m CCTMessage) pair(i int) (string, nc.Char) {
 	return m.strings[i], m.colors[i]
 }
 
+// Returns the amount of pairs in CCTMessage
 func (m CCTMessage) pairCount() int {
 	return len(m.strings)
 }
 
+// Returns the actual length of the message
 func (m CCTMessage) Length() int {
 	result := 0
 	for _, s := range m.strings {
@@ -59,6 +63,7 @@ func (m CCTMessage) Length() int {
 	return result
 }
 
+// Draws the CCTMessage
 func (m CCTMessage) Draw(win *nc.Window, y, x int, attrs ...nc.Char) {
 	for i := 0; i < m.pairCount(); i++ {
 		s, color := m.pair(i)
@@ -67,6 +72,7 @@ func (m CCTMessage) Draw(win *nc.Window, y, x int, attrs ...nc.Char) {
 	}
 }
 
+// Parses the colors. If colorPair doesn't exist yet, initializes it
 func parseColors(colorPair string) (nc.Char, error) {
 	originalColorPair := colorPair
 	if !strings.ContainsRune(colorPair, '-') {
@@ -111,6 +117,10 @@ func parseColors(colorPair string) (nc.Char, error) {
 	return result, nil
 }
 
+// Parses the regular string to the CCTMessage.
+// normal uses the default colors.
+// Supported colors: red, blue, green, black, cyan, magenta, white, gray, pink, orange, as well as every color up until 250
+// CCT example message: ${red} Hello, ${normal-green}World. ${normal} This is a ${cyan-normal}CCT${normal} example.
 func ToCCTMessage(line string) (*CCTMessage, error) {
 	if !strings.HasPrefix(line, "$") {
 		line = "${normal}" + line
@@ -133,6 +143,7 @@ func ToCCTMessage(line string) (*CCTMessage, error) {
 	return &result, nil
 }
 
+// Maps the messages to CCT messages
 func GetCCTs(lines []string) ([]*CCTMessage, error) {
 	result := make([]*CCTMessage, 0, len(lines))
 	for _, line := range lines {
@@ -145,19 +156,6 @@ func GetCCTs(lines []string) ([]*CCTMessage, error) {
 	return result, nil
 }
 
-func Foo(message string) {
-	matches := cctregex.FindAllStringSubmatch(message, -1)
-	for _, match := range matches {
-		fmt.Println("---")
-		fmt.Println(match[1])
-		fmt.Println(match[2])
-		// for _, smatch := range match {
-		// 	fmt.Println(smatch)
-		// }
-	}
-	fmt.Println("---")
-}
-
 func init() {
 	// add all remaining colors
 	for i := 10; i < 250; i++ {
@@ -165,6 +163,7 @@ func init() {
 	}
 }
 
+// Initializes the colors
 func initColors() {
 	err := nc.StartColor()
 	// nc.Flash()

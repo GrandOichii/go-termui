@@ -1,28 +1,21 @@
 package main
 
 import (
-	"log"
-
 	tui "github.com/GrandOichii/go-termui"
 )
 
-func checkErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
-	w, err := tui.CreateWindow("Window with button")
-	checkErr(err)
-
-	button, err := tui.NewButton("Press enter to click me!", 0, 0, func() error {
+	// create the window
+	w, _ := tui.CreateWindow("Window with button")
+	// create the button
+	button, _ := tui.NewButton("Press enter to click me!", 0, 0, func() error {
 		tui.Beep()
 		return nil
 	}, tui.KeyEnter)
-	checkErr(err)
-	w.Focus(button)
+	// add the button to the window
 	w.AddElement(button)
-
+	// set focus on the button
+	w.Focus(button)
+	// start the window
 	w.Start()
 }

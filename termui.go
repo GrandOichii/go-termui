@@ -2,7 +2,6 @@ package termui
 
 import (
 	"C"
-	"fmt"
 
 	nc "github.com/rthornton128/goncurses"
 )
@@ -25,6 +24,7 @@ type hasElementData interface {
 	GetElementData() *UIElementData
 }
 
+// A UI element
 type UIElement interface {
 	hasElementData
 	Drawable
@@ -34,20 +34,24 @@ type UIElement interface {
 	Width() int
 }
 
+// Sets the location of the element
 func SetYX(element hasElementData, y, x int) {
 	data := element.GetElementData()
 	data.yPos = y + yOffset
 	data.xPos = x + xOffset
 }
 
+// Sets the next element for target
 func SetNext(target hasElementData, element UIElement) {
 	target.GetElementData().next = element
 }
 
+// Sets the previous element for target
 func SetPrev(target hasElementData, element UIElement) {
 	target.GetElementData().prev = element
 }
 
+// Element data. Describes the location, visibility and several keys of the element
 type UIElementData struct {
 	yPos, xPos       int
 	focused          bool
@@ -56,6 +60,7 @@ type UIElementData struct {
 	nextKey, prevKey nc.Key
 }
 
+// Creates the element data
 func createUIED(y, x int) *UIElementData {
 	result := UIElementData{}
 	result.yPos = y + yOffset
@@ -68,11 +73,13 @@ func createUIED(y, x int) *UIElementData {
 	return &result
 }
 
+// A standard label
 type Label struct {
 	data    *UIElementData
 	cctText *CCTMessage
 }
 
+// Creates a new label
 func NewLabel(text string, y, x int) (*Label, error) {
 	result := Label{}
 	var err error
@@ -84,6 +91,7 @@ func NewLabel(text string, y, x int) (*Label, error) {
 	return &result, nil
 }
 
+// Draws the label
 func (l Label) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
 	attr := nc.A_NORMAL
 	if focused {
@@ -94,28 +102,34 @@ func (l Label) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
 	return nil
 }
 
+// Doesn't do anything
 func (l Label) HandleKey(key nc.Key) error {
 	return nil
 }
 
+// Sets the text of the label
 func (l *Label) SetText(text string) error {
 	var err error
 	l.cctText, err = ToCCTMessage(text)
 	return err
 }
 
+// Returns the element data of the label
 func (l Label) GetElementData() *UIElementData {
 	return l.data
 }
 
+// Returns the height of the label
 func (l Label) Height() int {
 	return 1
 }
 
+// Returns the width of the label
 func (l Label) Width() int {
 	return l.cctText.Length()
 }
 
+// A clickable button
 type Button struct {
 	click    func() error
 	clickKey nc.Key
@@ -123,6 +137,7 @@ type Button struct {
 	cctText  *CCTMessage
 }
 
+// Creates a new button
 func NewButton(text string, y, x int, click func() error, clickKey nc.Key) (*Button, error) {
 	result := Button{}
 	var err error
@@ -136,6 +151,7 @@ func NewButton(text string, y, x int, click func() error, clickKey nc.Key) (*But
 	return &result, nil
 }
 
+// Draws the button
 func (b Button) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
 	attr := nc.A_NORMAL
 	if focused {
@@ -146,12 +162,14 @@ func (b Button) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
 	return nil
 }
 
+// Sets the text of the button
 func (b *Button) SetText(text string) error {
 	var err error
 	b.cctText, err = ToCCTMessage(text)
 	return err
 }
 
+// On ENTER or mouse click calls click
 func (b Button) HandleKey(key nc.Key) error {
 	if key == b.clickKey || key == nc.KEY_MOUSE {
 		return b.click()
@@ -159,18 +177,22 @@ func (b Button) HandleKey(key nc.Key) error {
 	return nil
 }
 
+// Returns the element data of the button
 func (b Button) GetElementData() *UIElementData {
 	return b.data
 }
 
+// Returns the height of the button
 func (b Button) Height() int {
 	return 1
 }
 
+// Returns the width of the button
 func (b Button) Width() int {
 	return b.cctText.Length()
 }
 
+// Standard window
 type Window struct {
 	Title string
 
@@ -183,10 +205,12 @@ type Window struct {
 	win         *nc.Window
 }
 
+// Returns the height and width of the window
 func (w Window) GetMaxYX() (int, int) {
 	return w.height, w.width
 }
 
+// Draws the window
 func (w Window) Draw() error {
 	w.win.Erase()
 	var err error
@@ -209,19 +233,23 @@ func (w Window) Draw() error {
 	return nil
 }
 
+// Retunrs GetChar result
 func (w Window) GetKey() nc.Key {
 	return w.win.GetChar()
 }
 
+// Returns the goncurses window
 func (w Window) GetWin() *nc.Window {
 	return w.win
 }
 
+// Exits the window
 func (w *Window) Exit() {
 	w.running = false
 	nc.End()
 }
 
+// Returns the element that is located at the point
 func (w Window) elementAt(y, x int) UIElement {
 	for _, el := range w.elements {
 		elData := el.GetElementData()
@@ -232,6 +260,9 @@ func (w Window) elementAt(y, x int) UIElement {
 	return nil
 }
 
+// If esc is pressed, exits the application.
+// If mouse is clicked, focuses on the clicked element. If element is already focused, calls the HandleKey method in element.
+// Otherwise calls the HandleKey method in the focused element
 func (w *Window) HandleKey(key nc.Key) error {
 	if key == nc.KEY_ESC {
 		w.Exit()
@@ -263,7 +294,6 @@ func (w *Window) HandleKey(key nc.Key) error {
 				}
 				elData.focused = false
 				elData.next.GetElementData().focused = true
-				_ = 1
 			case elData.prevKey:
 				// focus on the elData.prev
 				if elData.prev == nil {
@@ -271,7 +301,6 @@ func (w *Window) HandleKey(key nc.Key) error {
 				}
 				elData.focused = false
 				elData.prev.GetElementData().focused = true
-				_ = 1
 			default:
 				el.HandleKey(key)
 			}
@@ -281,10 +310,12 @@ func (w *Window) HandleKey(key nc.Key) error {
 	return nil
 }
 
+// Returns the elements of the window
 func (w Window) GetElements() []UIElement {
 	return w.elements
 }
 
+// Basic goncurses configuration
 func (w *Window) config() {
 	// remove the delay from pressing the escape key
 	nc.SetEscDelay(0)
@@ -299,6 +330,7 @@ func (w *Window) config() {
 	nc.MouseMask(nc.M_B1_PRESSED, nil) // only detect left mouse clicks
 }
 
+// Starts the window
 func (w *Window) Start() error {
 	var err error
 	w.running = true
@@ -319,27 +351,25 @@ func (w *Window) Start() error {
 	return nil
 }
 
+// Adds the element to the window
 func (w *Window) AddElement(element UIElement) {
 	w.elements = append(w.elements, element)
 }
 
-func (w *Window) PrintData() {
-	for _, el := range w.elements {
-		fmt.Println(el, el.GetElementData())
-	}
-}
-
+// Unfocuses all the elements in the window, then focuses the element
 func (w *Window) Focus(element hasElementData) {
 	w.unfocusAll()
 	element.GetElementData().focused = true
 }
 
+// Unfocuses all the elements in the window
 func (w *Window) unfocusAll() {
 	for _, el := range w.elements {
 		el.GetElementData().focused = false
 	}
 }
 
+// Creates new window (should only be called once)
 func CreateWindow(title string) (*Window, error) {
 	var err error
 	result := Window{}
@@ -359,6 +389,7 @@ func CreateWindow(title string) (*Window, error) {
 	return &result, nil
 }
 
+// Links all the elements
 func Link(elements ...UIElement) {
 	if len(elements) == 0 {
 		return
@@ -379,10 +410,12 @@ func Link(elements ...UIElement) {
 	}
 }
 
+// Calls the goncurses Flash method
 func Flash() {
 	nc.Flash()
 }
 
+// Calls the goncurses Beep method
 func Beep() {
 	nc.Beep()
 }

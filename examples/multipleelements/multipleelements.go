@@ -1,44 +1,39 @@
 package main
 
 import (
-	"log"
-
 	tui "github.com/GrandOichii/go-termui"
 )
 
-func checkErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
-	w, err := tui.CreateWindow("${red}Multiple ${normal}elements")
-	checkErr(err)
-
-	label1, err := tui.NewLabel("Funny button", 1, 1)
-	checkErr(err)
-	button1, err := tui.NewButton("Click", 2, 1, func() error {
+	// create the window
+	w, _ := tui.CreateWindow("${red}Multiple ${normal}elements")
+	// create the first label
+	label1, _ := tui.NewLabel("Funny button", 1, 1)
+	// create the first button
+	button1, _ := tui.NewButton("Click", 2, 1, func() error {
 		tui.MessageBox(w, "Funny button clicked", []string{})
 		return nil
 	}, tui.KeyEnter)
-	checkErr(err)
-	label2, err := tui.NewLabel("Exit button", 1, 21)
-	checkErr(err)
-	button2, err := tui.NewButton("Click", 2, 21, func() error {
+	// create the second label
+	label2, _ := tui.NewLabel("Exit button", 1, 21)
+	// create the second button
+	button2, _ := tui.NewButton("Click", 2, 21, func() error {
 		w.Exit()
 		return nil
 	}, tui.KeyEnter)
-	checkErr(err)
 
-	tui.Link(button1, button2)
-
+	// add all the elements
 	w.AddElement(label1)
 	w.AddElement(button1)
 	w.AddElement(label2)
 	w.AddElement(button2)
 
+	// link up all the buttons
+	tui.Link(button1, button2)
+
+	// focus on the first button
 	w.Focus(button1)
 
+	// start the window
 	w.Start()
 }

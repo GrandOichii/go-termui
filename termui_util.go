@@ -16,6 +16,7 @@ const (
 	MultipleElements
 )
 
+// List template. Use for drawing lists
 type listTemplate struct {
 	win              *nc.Window
 	options          []*CCTMessage
@@ -25,6 +26,7 @@ type listTemplate struct {
 	pageN            int
 }
 
+// Creates a list template
 func createListTemplate(win *nc.Window, options []*CCTMessage, maxDisplayAmount int) *listTemplate {
 	result := listTemplate{}
 	result.win = win
@@ -36,10 +38,12 @@ func createListTemplate(win *nc.Window, options []*CCTMessage, maxDisplayAmount 
 	return &result
 }
 
+// Draws the list tamplate
 func (l listTemplate) draw(y, x int, focusSelected bool) error {
 	return drawList(l.win, y, x, l.options, l.maxDisplayAmount, l.cursor, l.pageN, focusSelected)
 }
 
+// Moves the cursor of the list template up
 func (l *listTemplate) scrollUp() {
 	l.choice--
 	l.cursor--
@@ -60,6 +64,7 @@ func (l *listTemplate) scrollUp() {
 	}
 }
 
+// Moves the cursor of the list tamplate down
 func (l *listTemplate) scrollDown() {
 	l.choice++
 	l.cursor++
@@ -81,6 +86,7 @@ func (l *listTemplate) scrollDown() {
 	}
 }
 
+// Line edit template. Use for drawing and interacting with writable lines
 type lineEditTemplate struct {
 	content string
 	blank   string
@@ -88,6 +94,7 @@ type lineEditTemplate struct {
 	maxLen  int
 }
 
+// Creates the line edit template
 func createLineEditTemplate(text string, maxLen int) *lineEditTemplate {
 	result := lineEditTemplate{}
 	result.cursor = 0
@@ -97,6 +104,7 @@ func createLineEditTemplate(text string, maxLen int) *lineEditTemplate {
 	return &result
 }
 
+// Moves the cursor to the left
 func (l *lineEditTemplate) MoveCursorLeft() {
 	l.cursor--
 	if l.cursor == 0 {
@@ -104,6 +112,7 @@ func (l *lineEditTemplate) MoveCursorLeft() {
 	}
 }
 
+// Moves the cursor to the right
 func (l *lineEditTemplate) MoveCursorRight() {
 	l.cursor++
 	if l.cursor > len(l.content) {
@@ -111,6 +120,7 @@ func (l *lineEditTemplate) MoveCursorRight() {
 	}
 }
 
+// Adds the character to the cursor location
 func (l *lineEditTemplate) AddCh(ch rune) {
 	if l.cursor < l.maxLen && isValidLineEditCh(ch) {
 		l.content = l.content[:l.cursor] + string(ch) + l.content[l.cursor:]
@@ -118,6 +128,7 @@ func (l *lineEditTemplate) AddCh(ch rune) {
 	}
 }
 
+// Draws the line edit template
 func (l lineEditTemplate) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
 	win.MovePrintf(yPos, xPos, l.blank)
 	win.MovePrintf(yPos, xPos, l.content)
@@ -130,6 +141,7 @@ func (l lineEditTemplate) Draw(win *nc.Window, yPos, xPos int, focused bool) err
 	return nil
 }
 
+// Removes the element at the cursor
 func (l *lineEditTemplate) DeleteSelected() {
 	if l.cursor == 0 {
 		return
@@ -138,6 +150,7 @@ func (l *lineEditTemplate) DeleteSelected() {
 	l.MoveCursorLeft()
 }
 
+// Checks whether the character can be added to the line edit template
 func isValidLineEditCh(ch rune) bool {
 	if ch >= 'a' && ch <= 'z' {
 		return true
@@ -151,6 +164,7 @@ func isValidLineEditCh(ch rune) bool {
 	return ch == ' '
 }
 
+// Draws the list
 func drawList(win *nc.Window, y, x int, options []*CCTMessage, maxDisplayAmount, cursor, pageN int, focusSelected bool) error {
 	for i := 0; i < minInt(maxDisplayAmount, len(options)); i++ {
 		attr := nc.A_NORMAL
@@ -163,6 +177,7 @@ func drawList(win *nc.Window, y, x int, options []*CCTMessage, maxDisplayAmount,
 	return nil
 }
 
+// Returns the max element
 func maxInt(a ...int) int {
 	result := a[0]
 	for _, v := range a {
@@ -173,6 +188,7 @@ func maxInt(a ...int) int {
 	return result
 }
 
+// Returns the min element
 func minInt(a ...int) int {
 	result := a[0]
 	for _, v := range a {
@@ -183,6 +199,7 @@ func minInt(a ...int) int {
 	return result
 }
 
+// More convinient way to add to window with multiple attributes
 func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 	for _, attr := range attrs {
 		win.AttrOn(attr)
@@ -191,10 +208,15 @@ func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 	win.MovePrint(y, x, line)
 }
 
+// Draws the borders of the window
 func DrawBorders(win *nc.Window) error {
 	return win.Border(nc.ACS_VLINE, nc.ACS_VLINE, nc.ACS_HLINE, nc.ACS_HLINE, nc.ACS_ULCORNER, nc.ACS_URCORNER, nc.ACS_LLCORNER, nc.ACS_LRCORNER)
 }
 
+// Displays a message box
+// Choices can't be more than 3 elements
+// If choices is empty, it becomes {"Ok"}
+// Returns the picked element
 func MessageBox(parent *Window, message string, choices []string) (string, error) {
 	if len(choices) == 0 {
 		choices = []string{"Ok"}
@@ -281,6 +303,8 @@ func MessageBox(parent *Window, message string, choices []string) (string, error
 	return choices[choiceID], nil
 }
 
+// Displays a drop down box
+// Returns the indicies of the picked options
 func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBChoiceType) ([]int, error) {
 	if len(options) == 0 {
 		return nil, nil
@@ -346,6 +370,8 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	}
 }
 
+// Displays a box where the user will have to enter a string
+// Returns the entered string
 func EnterString(parent *Window, text string, prompt string, maxLength int) (string, error) {
 	pheight, pwidth := parent.win.MaxYX()
 	cctprompt, err := ToCCTMessage(prompt)

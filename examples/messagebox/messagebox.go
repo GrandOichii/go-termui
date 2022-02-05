@@ -1,29 +1,24 @@
 package main
 
 import (
-	"log"
-
 	tui "github.com/GrandOichii/go-termui"
 )
 
-func checkErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
-	w, err := tui.CreateWindow("MessageBox tester")
-	checkErr(err)
-
-	button, err := tui.NewButton("Press enter to click me!", 0, 0, func() error {
+	// create the window
+	w, _ := tui.CreateWindow("MessageBox tester")
+	// create the button
+	button, _ := tui.NewButton("Press enter to click me!", 0, 0, func() error {
+		// let the user pick from the two options
 		result, _ := tui.MessageBox(w, "Red of blue?", []string{"${red}Red", "${blue}Blue"})
+		// show the user the picked option
 		tui.MessageBox(w, "You chose "+result, []string{})
 		return nil
 	}, tui.KeyEnter)
-	checkErr(err)
-	w.Focus(button)
+	// add the button to the window
 	w.AddElement(button)
-
+	// focus on the button
+	w.Focus(button)
+	// start the window
 	w.Start()
 }
