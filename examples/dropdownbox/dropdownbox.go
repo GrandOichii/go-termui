@@ -9,14 +9,14 @@ func main() {
 	w, _ := tui.CreateWindow("DropDownBox tester")
 	// create the button
 	button, _ := tui.NewButton("Press enter to click me!", 0, 0, func() error {
-		ddbOptions := []string{"Choose ${green}me", "or ${red}me", "${magenta-white}probably ${normal}me"}
-		result, _ := tui.DropDownBox(ddbOptions, 5, 1, 25, tui.SingleElement)
+		ddbOptions := []string{"Choose ${green}me", "or ${red}me", "${magenta-white}proably ${normal}me"}
+		result, _ := tui.DropDownBox(ddbOptions, 2, 1, 25, tui.SingleElement, "cyan-gray")
 		if len(result) == 0 {
 			// user didn't choose anything
 			return nil
 		}
 		// display the choice
-		tui.MessageBox(w, ddbOptions[result[0]], []string{})
+		tui.MessageBox(w, ddbOptions[result[0]], []string{}, "normal")
 		return nil
 	}, tui.KeyEnter)
 	// add the button to the window

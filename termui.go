@@ -51,6 +51,16 @@ func SetPrev(target hasElementData, element UIElement) {
 	target.GetElementData().prev = element
 }
 
+// Sets the key for selecting the next element
+func SetNextKey(element hasElementData, key nc.Key) {
+	element.GetElementData().nextKey = key
+}
+
+// Sets the key for selecting the prev element
+func SetPrevKey(element hasElementData, key nc.Key) {
+	element.GetElementData().prevKey = key
+}
+
 // Element data. Describes the location, visibility and several keys of the element
 type UIElementData struct {
 	yPos, xPos       int
@@ -200,9 +210,15 @@ type Window struct {
 	width       int
 	focusedElID int
 	running     bool
+	borderColor string
 	cctTitle    *CCTMessage
 	elements    []UIElement
 	win         *nc.Window
+}
+
+// Sets the border color of the window
+func (w *Window) SetBorderColor(borderColor string) {
+	w.borderColor = borderColor
 }
 
 // Returns the height and width of the window
@@ -214,7 +230,7 @@ func (w Window) GetMaxYX() (int, int) {
 func (w Window) Draw() error {
 	w.win.Erase()
 	var err error
-	err = DrawBorders(w.win)
+	err = DrawBorders(w.win, w.borderColor)
 	w.cctTitle.Draw(w.win, 0, 1)
 	if err != nil {
 		return err
@@ -386,6 +402,7 @@ func CreateWindow(title string) (*Window, error) {
 	}
 	result.running = false
 	result.elements = []UIElement{}
+	result.borderColor = "normal"
 	return &result, nil
 }
 

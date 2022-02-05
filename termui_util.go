@@ -209,15 +209,26 @@ func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 }
 
 // Draws the borders of the window
-func DrawBorders(win *nc.Window) error {
-	return win.Border(nc.ACS_VLINE, nc.ACS_VLINE, nc.ACS_HLINE, nc.ACS_HLINE, nc.ACS_ULCORNER, nc.ACS_URCORNER, nc.ACS_LLCORNER, nc.ACS_LRCORNER)
+func DrawBorders(win *nc.Window, colorPair string) error {
+	var err error
+	color, err := parseColors(colorPair)
+	if err != nil {
+		return err
+	}
+	win.AttrOn(color)
+	err = win.Border(nc.ACS_VLINE, nc.ACS_VLINE, nc.ACS_HLINE, nc.ACS_HLINE, nc.ACS_ULCORNER, nc.ACS_URCORNER, nc.ACS_LLCORNER, nc.ACS_LRCORNER)
+	if err != nil {
+		return err
+	}
+	win.AttrOff(color)
+	return nil
 }
 
 // Displays a message box
 // Choices can't be more than 3 elements
 // If choices is empty, it becomes {"Ok"}
 // Returns the picked element
-func MessageBox(parent *Window, message string, choices []string) (string, error) {
+func MessageBox(parent *Window, message string, choices []string, borderColor string) (string, error) {
 	if len(choices) == 0 {
 		choices = []string{"Ok"}
 	}
@@ -260,7 +271,7 @@ func MessageBox(parent *Window, message string, choices []string) (string, error
 		return "", err
 	}
 	defer win.Clear()
-	DrawBorders(win)
+	DrawBorders(win, borderColor)
 	cctMessage.Draw(win, 2, 2)
 	// put(win, 2, 2, message)
 	whiteSpace := strings.Repeat(" ", wwidth-2)
@@ -305,7 +316,7 @@ func MessageBox(parent *Window, message string, choices []string) (string, error
 
 // Displays a drop down box
 // Returns the indicies of the picked options
-func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBChoiceType) ([]int, error) {
+func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBChoiceType, borderColor string) ([]int, error) {
 	if len(options) == 0 {
 		return nil, nil
 	}
@@ -332,18 +343,25 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	}
 	defer win.Clear()
 	win.Keypad(true)
-	DrawBorders(win)
+	DrawBorders(win, borderColor)
 	lt := createListTemplate(win, cctOptions, maxDisplayAmount)
 	whiteSpace := strings.Repeat(" ", width-2)
+	bc, err := parseColors(borderColor)
+	if err != nil {
+		return nil, err
+	}
 	for {
 		// clear lines
+		win.AttrOn(bc)
 		win.MoveAddChar(1, width-1, nc.ACS_VLINE)
 		win.MoveAddChar(height-2, width-1, nc.ACS_VLINE)
+		win.AttrOff(bc)
 		for i := 1; i < height-1; i++ {
 			put(win, i, 1, whiteSpace)
 		}
 		// draw
 		lt.draw(1, 1, true)
+		win.AttrOn(bc)
 		if len(options) > maxDisplayAmount {
 			if lt.pageN != 0 {
 				win.MoveAddChar(1, width-1, nc.ACS_UARROW)
@@ -352,6 +370,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 				win.MoveAddChar(height-2, width-1, nc.ACS_DARROW)
 			}
 		}
+		win.AttrOff(bc)
 		// handle key
 		key := win.GetChar()
 		switch key {
@@ -372,7 +391,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 
 // Displays a box where the user will have to enter a string
 // Returns the entered string
-func EnterString(parent *Window, text string, prompt string, maxLength int) (string, error) {
+func EnterString(parent *Window, text string, prompt string, maxLength int, borderColor string) (string, error) {
 	pheight, pwidth := parent.win.MaxYX()
 	cctprompt, err := ToCCTMessage(prompt)
 	if err != nil {
@@ -388,7 +407,7 @@ func EnterString(parent *Window, text string, prompt string, maxLength int) (str
 	}
 	defer w.Clear()
 	w.Keypad(true)
-	DrawBorders(w)
+	DrawBorders(w, borderColor)
 	y = 2
 	x = cctprompt.Length() + 4
 	cctprompt.Draw(w, y, 2)

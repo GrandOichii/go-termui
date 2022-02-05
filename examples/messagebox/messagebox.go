@@ -10,9 +10,9 @@ func main() {
 	// create the button
 	button, _ := tui.NewButton("Press enter to click me!", 0, 0, func() error {
 		// let the user pick from the two options
-		result, _ := tui.MessageBox(w, "Red of blue?", []string{"${red}Red", "${blue}Blue"})
+		result, _ := tui.MessageBox(w, "Red of blue?", []string{"${red}Red", "${blue}Blue"}, "cyan")
 		// show the user the picked option
-		tui.MessageBox(w, "You chose "+result, []string{})
+		tui.MessageBox(w, "You chose "+result, []string{}, "red-white")
 		return nil
 	}, tui.KeyEnter)
 	// add the button to the window

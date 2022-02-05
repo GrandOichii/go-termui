@@ -11,7 +11,7 @@ func main() {
 	label1, _ := tui.NewLabel("Funny button", 1, 1)
 	// create the first button
 	button1, _ := tui.NewButton("Click", 2, 1, func() error {
-		tui.MessageBox(w, "Funny button clicked", []string{})
+		tui.MessageBox(w, "Funny button clicked", []string{}, "normal")
 		return nil
 	}, tui.KeyEnter)
 	// create the second label
