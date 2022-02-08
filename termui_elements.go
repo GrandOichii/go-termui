@@ -275,7 +275,7 @@ func (p *PieChart) setColors(colorPairs []string) error {
 
 // A word choice element
 type WordChoice struct {
-	wct    *wordChoiceTemplate
+	wct    *WordChoiceTemplate
 	data   *UIElementData
 	IncKey nc.Key
 	DecKey nc.Key
@@ -329,7 +329,7 @@ func (w WordChoice) Width() int {
 
 // A line edit element
 type LineEdit struct {
-	let  *lineEditTemplate
+	let  *LineEditTemplate
 	data *UIElementData
 }
 

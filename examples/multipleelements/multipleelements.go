@@ -14,6 +14,8 @@ func main() {
 		tui.MessageBox(w, "Funny button clicked", []string{}, "normal")
 		return nil
 	}, tui.KeyEnter)
+	tui.SetNextKey(button1, tui.KeyRight)
+	tui.SetPrevKey(button1, tui.KeyLeft)
 	// create the second label
 	label2, _ := tui.NewLabel("Exit button", 1, 21)
 	// create the second button
@@ -21,6 +23,8 @@ func main() {
 		w.Exit()
 		return nil
 	}, tui.KeyEnter)
+	tui.SetNextKey(button2, tui.KeyRight)
+	tui.SetPrevKey(button2, tui.KeyLeft)
 
 	// add all the elements
 	w.AddElement(label1)
