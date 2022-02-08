@@ -199,6 +199,15 @@ func minInt(a ...int) int {
 	return result
 }
 
+// Returns the sum of all the elements
+func sumInt(a ...int) int {
+	result := 0
+	for _, i := range a {
+		result += i
+	}
+	return result
+}
+
 // More convinient way to add to window with multiple attributes
 func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 	for _, attr := range attrs {
@@ -208,10 +217,33 @@ func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 	win.MovePrint(y, x, line)
 }
 
+// Draws a box
+func DrawBox(win *nc.Window, y, x, height, width int, borderColor string) error {
+	bcolor, err := parseColorPair(borderColor)
+	if err != nil {
+		return err
+	}
+	win.AttrOn(bcolor)
+	win.MoveAddChar(y, x, nc.ACS_ULCORNER)
+	win.MoveAddChar(y+height-1, x, nc.ACS_LLCORNER)
+	win.MoveAddChar(y, x+width-1, nc.ACS_URCORNER)
+	win.MoveAddChar(y+height-1, x+width-1, nc.ACS_LRCORNER)
+	for i := 1; i < height-1; i++ {
+		win.MoveAddChar(y+i, x, nc.ACS_VLINE)
+		win.MoveAddChar(y+i, x+width-1, nc.ACS_VLINE)
+	}
+	for i := 1; i < width-1; i++ {
+		win.MoveAddChar(y, x+i, nc.ACS_HLINE)
+		win.MoveAddChar(y+height-1, x+i, nc.ACS_HLINE)
+	}
+	win.AttrOff(bcolor)
+	return nil
+}
+
 // Draws the borders of the window
 func DrawBorders(win *nc.Window, colorPair string) error {
 	var err error
-	color, err := parseColors(colorPair)
+	color, err := parseColorPair(colorPair)
 	if err != nil {
 		return err
 	}
@@ -346,7 +378,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	DrawBorders(win, borderColor)
 	lt := createListTemplate(win, cctOptions, maxDisplayAmount)
 	whiteSpace := strings.Repeat(" ", width-2)
-	bc, err := parseColors(borderColor)
+	bc, err := parseColorPair(borderColor)
 	if err != nil {
 		return nil, err
 	}

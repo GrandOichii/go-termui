@@ -16,12 +16,13 @@ const (
 	KeyRight = nc.KEY_RIGHT
 )
 
-type Drawable interface {
-	Draw(win *nc.Window, yPos, xPos int, focused bool) error
-}
-
 type hasElementData interface {
 	GetElementData() *UIElementData
+}
+
+type Drawable interface {
+	hasElementData
+	Draw(win *nc.Window) error
 }
 
 // A UI element
@@ -61,6 +62,11 @@ func SetPrevKey(element hasElementData, key nc.Key) {
 	element.GetElementData().prevKey = key
 }
 
+// Toggles the visibility of the element
+func ToggleVisibility(element hasElementData, value bool) {
+	element.GetElementData().Visible = value
+}
+
 // Element data. Describes the location, visibility and several keys of the element
 type UIElementData struct {
 	yPos, xPos       int
@@ -81,125 +87,6 @@ func createUIED(y, x int) *UIElementData {
 	result.nextKey = nc.KEY_DOWN
 	result.Visible = true
 	return &result
-}
-
-// A standard label
-type Label struct {
-	data    *UIElementData
-	cctText *CCTMessage
-}
-
-// Creates a new label
-func NewLabel(text string, y, x int) (*Label, error) {
-	result := Label{}
-	var err error
-	result.cctText, err = ToCCTMessage(text)
-	if err != nil {
-		return nil, err
-	}
-	result.data = createUIED(y, x)
-	return &result, nil
-}
-
-// Draws the label
-func (l Label) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
-	attr := nc.A_NORMAL
-	if focused {
-		attr = hightlightKey
-	}
-	l.cctText.Draw(win, yPos, xPos, attr)
-	// put(pWin, data.yPos, data.xPos, l.text, attr)
-	return nil
-}
-
-// Doesn't do anything
-func (l Label) HandleKey(key nc.Key) error {
-	return nil
-}
-
-// Sets the text of the label
-func (l *Label) SetText(text string) error {
-	var err error
-	l.cctText, err = ToCCTMessage(text)
-	return err
-}
-
-// Returns the element data of the label
-func (l Label) GetElementData() *UIElementData {
-	return l.data
-}
-
-// Returns the height of the label
-func (l Label) Height() int {
-	return 1
-}
-
-// Returns the width of the label
-func (l Label) Width() int {
-	return l.cctText.Length()
-}
-
-// A clickable button
-type Button struct {
-	click    func() error
-	clickKey nc.Key
-	data     *UIElementData
-	cctText  *CCTMessage
-}
-
-// Creates a new button
-func NewButton(text string, y, x int, click func() error, clickKey nc.Key) (*Button, error) {
-	result := Button{}
-	var err error
-	result.cctText, err = ToCCTMessage(text)
-	if err != nil {
-		return nil, err
-	}
-	result.click = click
-	result.clickKey = clickKey
-	result.data = createUIED(y, x)
-	return &result, nil
-}
-
-// Draws the button
-func (b Button) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
-	attr := nc.A_NORMAL
-	if focused {
-		attr = hightlightKey
-	}
-	b.cctText.Draw(win, yPos, xPos, attr)
-	// put(pWin, data.yPos, data.xPos, b.text, attr)
-	return nil
-}
-
-// Sets the text of the button
-func (b *Button) SetText(text string) error {
-	var err error
-	b.cctText, err = ToCCTMessage(text)
-	return err
-}
-
-// On ENTER or mouse click calls click
-func (b Button) HandleKey(key nc.Key) error {
-	if key == b.clickKey || key == nc.KEY_MOUSE {
-		return b.click()
-	}
-	return nil
-}
-
-// Returns the element data of the button
-func (b Button) GetElementData() *UIElementData {
-	return b.data
-}
-
-// Returns the height of the button
-func (b Button) Height() int {
-	return 1
-}
-
-// Returns the width of the button
-func (b Button) Width() int {
-	return b.cctText.Length()
 }
 
 // Standard window
@@ -239,13 +126,12 @@ func (w Window) Draw() error {
 	for _, el := range w.elements {
 		elData := el.GetElementData()
 		if elData.Visible {
-			err = el.Draw(pWin, elData.yPos, elData.xPos, elData.focused)
+			err = el.Draw(pWin)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	w.win.Refresh()
 	return nil
 }
 
@@ -284,21 +170,21 @@ func (w *Window) HandleKey(key nc.Key) error {
 		w.Exit()
 		return nil
 	}
-	if key == nc.KEY_MOUSE {
-		md := nc.GetMouse()
-		element := w.elementAt(md.Y, md.X)
-		elData := element.GetElementData()
-		if element == nil {
-			return nil
-		}
-		if elData.focused {
-			// MessageBox(w, fmt.Sprintf("%v", elData), []string{})
-			element.HandleKey(key)
-		} else {
-			w.Focus(element)
-		}
-		return nil
-	}
+	// if key == nc.KEY_MOUSE {
+	// 	md := nc.GetMouse()
+	// 	element := w.elementAt(md.Y, md.X)
+	// 	elData := element.GetElementData()
+	// 	if element == nil {
+	// 		return nil
+	// 	}
+	// 	if elData.focused {
+	// 		// MessageBox(w, fmt.Sprintf("%v", elData), []string{})
+	// 		element.HandleKey(key)
+	// 	} else {
+	// 		w.Focus(element)
+	// 	}
+	// 	return nil
+	// }
 	for _, el := range w.elements {
 		elData := el.GetElementData()
 		if elData.focused {
@@ -355,14 +241,20 @@ func (w *Window) Start() error {
 	}
 	w.config()
 	defer nc.Cursor(1)
+	defer w.Exit()
 	var key nc.Key
 	for w.running {
 		// draw
-		w.Draw()
+		err = w.Draw()
+		if err != nil {
+			return err
+		}
 		// handle key
 		key = w.GetKey()
-		w.HandleKey(key)
-		// clear screen
+		err = w.HandleKey(key)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

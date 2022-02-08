@@ -4,7 +4,6 @@ package termui
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -73,7 +72,7 @@ func (m CCTMessage) Draw(win *nc.Window, y, x int, attrs ...nc.Char) {
 }
 
 // Parses the colors. If colorPair doesn't exist yet, initializes it
-func parseColors(colorPair string) (nc.Char, error) {
+func parseColorPair(colorPair string) (nc.Char, error) {
 	originalColorPair := colorPair
 	if !strings.ContainsRune(colorPair, '-') {
 		colorPair += "-normal"
@@ -132,14 +131,13 @@ func ToCCTMessage(line string) (*CCTMessage, error) {
 	for _, match := range matches {
 		colorPair := match[1]
 		s := match[2]
-		colorKey, err := parseColors(colorPair)
+		colorKey, err := parseColorPair(colorPair)
 		if err != nil {
 			return nil, err
 		}
 		result.strings = append(result.strings, s)
 		result.colors = append(result.colors, colorKey)
 	}
-	os.WriteFile("file.txt", []byte(fmt.Sprintf("*%v*", result)), 0755)
 	return &result, nil
 }
 
