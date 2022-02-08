@@ -1,6 +1,7 @@
 package termui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,10 +11,18 @@ import (
 type DDBChoiceType int
 
 const (
-	lineEditFocusedAttribute = nc.A_REVERSE
+	focusedAttribute = nc.A_REVERSE
 
 	SingleElement DDBChoiceType = iota
 	MultipleElements
+)
+
+type Alignment int
+
+const (
+	AlignLeft = iota
+	AlignRight
+	AlignCenter
 )
 
 // List template. Use for drawing lists
@@ -134,9 +143,9 @@ func (l lineEditTemplate) Draw(win *nc.Window, yPos, xPos int, focused bool) err
 	win.MovePrintf(yPos, xPos, l.content)
 	if l.cursor < l.maxLen {
 		win.Move(yPos, xPos+l.cursor)
-		win.AttrOn(lineEditFocusedAttribute)
+		win.AttrOn(focusedAttribute)
 		win.Print(" ")
-		win.AttrOff(lineEditFocusedAttribute)
+		win.AttrOff(focusedAttribute)
 	}
 	return nil
 }
@@ -148,6 +157,80 @@ func (l *lineEditTemplate) DeleteSelected() {
 	}
 	l.content = l.content[:l.cursor-1] + l.content[l.cursor:]
 	l.MoveCursorLeft()
+}
+
+// Word choice template use for prompting user to pick a word from options
+type wordChoiceTemplate struct {
+	options []*CCTMessage
+	choice  int
+	maxLen  int
+	al      Alignment
+}
+
+// Creates a word choice template
+func createWordChoiceTemplate(options []string, alignment Alignment) (*wordChoiceTemplate, error) {
+	result := wordChoiceTemplate{}
+	var err error
+	if len(options) == 0 {
+		return nil, errors.New("termui - can't create a WordChoice with no options")
+	}
+	result.options, err = GetCCTs(options)
+	if err != nil {
+		return nil, err
+	}
+	result.choice = 0
+	result.maxLen = result.options[0].Length()
+	for i, o := range result.options {
+		if i == 0 {
+			continue
+		}
+		result.maxLen = maxInt(result.maxLen, o.Length())
+	}
+	result.al = alignment
+	return &result, nil
+}
+
+// Returns the currently focused option
+func (w wordChoiceTemplate) GetSelected() *CCTMessage {
+	return w.options[w.choice]
+}
+
+// Focuses on the next option
+func (w *wordChoiceTemplate) FocusNext() {
+	w.choice++
+	if w.choice == len(w.options) {
+		w.choice = 0
+	}
+}
+
+// Focuses on the previous option
+func (w *wordChoiceTemplate) FocusPrev() {
+	w.choice--
+	if w.choice < 0 {
+		w.choice = len(w.options) - 1
+	}
+}
+
+// Draws the word choice template
+func (w wordChoiceTemplate) Draw(win *nc.Window, y, x int, focused bool) error {
+	if focused {
+		win.AttrOn(focusedAttribute)
+	}
+	win.MoveAddChar(y, x, '<')
+	win.MoveAddChar(y, x+w.maxLen+1, '>')
+	if focused {
+		win.AttrOff(focusedAttribute)
+	}
+	option := w.options[w.choice]
+	xl := x + 1
+	switch w.al {
+	case AlignCenter:
+		xl += (w.maxLen - option.Length()) / 2
+	case AlignRight:
+		xl += (w.maxLen - option.Length())
+	}
+	option.Draw(win, y, xl)
+	return nil
 }
 
 // Checks whether the character can be added to the line edit template
@@ -206,6 +289,12 @@ func sumInt(a ...int) int {
 		result += i
 	}
 	return result
+}
+
+func center(s string, n int, fill string) string {
+	div := n / 2
+
+	return strings.Repeat(fill, div) + s + strings.Repeat(fill, div)
 }
 
 // More convinient way to add to window with multiple attributes

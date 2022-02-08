@@ -76,8 +76,7 @@ type Button struct {
 // Creates a new button
 func NewButton(text string, y, x int, click func() error, clickKey nc.Key) (*Button, error) {
 	result := Button{}
-	var err error
-	err = result.SetText(text)
+	err := result.SetText(text)
 	if err != nil {
 		return nil, err
 	}
@@ -272,4 +271,58 @@ func (p *PieChart) setColors(colorPairs []string) error {
 		p.colors = append(p.colors, color)
 	}
 	return nil
+}
+
+// A word choice element
+type WordChoice struct {
+	wct    *wordChoiceTemplate
+	data   *UIElementData
+	IncKey nc.Key
+	DecKey nc.Key
+}
+
+// Creates a word choice element
+func NewWordChoice(options []string, alignment Alignment, y, x int) (*WordChoice, error) {
+	var err error
+	result := WordChoice{}
+	result.IncKey = KeyRight
+	result.DecKey = KeyLeft
+	result.data = createUIED(y, x)
+	result.wct, err = createWordChoiceTemplate(options, alignment)
+	return &result, err
+}
+
+// Returns the currently selected option
+func (w WordChoice) GetSelected() *CCTMessage {
+	return w.wct.GetSelected()
+}
+
+func (w WordChoice) Draw(win *nc.Window) error {
+	return w.wct.Draw(win, w.data.yPos, w.data.xPos, w.data.focused)
+}
+
+// Returns the element data of the element
+func (w WordChoice) GetElementData() *UIElementData {
+	return w.data
+}
+
+// Toggles between the options
+func (w WordChoice) HandleKey(key nc.Key) error {
+	switch key {
+	case KeyRight:
+		w.wct.FocusNext()
+	case KeyLeft:
+		w.wct.FocusPrev()
+	}
+	return nil
+}
+
+// Returns 1
+func (w WordChoice) Height() int {
+	return 1
+}
+
+// Returns the length of the longest option + 2
+func (w WordChoice) Width() int {
+	return w.wct.maxLen
 }

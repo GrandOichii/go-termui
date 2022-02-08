@@ -62,6 +62,19 @@ func (m CCTMessage) Length() int {
 	return result
 }
 
+// Converts the cct string
+func (m CCTMessage) ToString() string {
+	result := ""
+	reverseColorMap := map[nc.Char]string{}
+	for key, value := range colorMap {
+		reverseColorMap[value] = key
+	}
+	for i := 0; i < len(m.strings); i++ {
+		result += fmt.Sprintf("${%v}%v", reverseColorMap[m.colors[i]], m.strings[i])
+	}
+	return result
+}
+
 // Draws the CCTMessage
 func (m CCTMessage) Draw(win *nc.Window, y, x int, attrs ...nc.Char) {
 	for i := 0; i < m.pairCount(); i++ {
