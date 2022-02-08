@@ -326,3 +326,64 @@ func (w WordChoice) Height() int {
 func (w WordChoice) Width() int {
 	return w.wct.maxLen
 }
+
+// A line edit element
+type LineEdit struct {
+	let  *lineEditTemplate
+	data *UIElementData
+}
+
+// Creates a new line edit element
+func NewLineEdit(text string, maxLength int, y, x int) (*LineEdit, error) {
+	result := LineEdit{}
+	result.data = createUIED(y, x)
+	result.let = createLineEditTemplate(text, maxLength)
+	return &result, nil
+}
+
+// Sets the text of the element
+func (l *LineEdit) SetText(text string) error {
+	return l.let.SetText(text)
+}
+
+// Returns the entered text
+func (l LineEdit) GetText() string {
+	return l.let.content
+}
+
+// Returns the element data of the element
+func (l LineEdit) GetElementData() *UIElementData {
+	return l.data
+}
+
+// Draws the element
+func (l LineEdit) Draw(win *nc.Window) error {
+	return l.let.Draw(win, l.data.yPos, l.data.xPos, l.data.focused)
+}
+
+// On left/right moves the cursor.
+// On letters and some other characters enters them.
+// On backspace removes the current character.
+func (l LineEdit) HandleKey(key nc.Key) error {
+	switch key {
+	case KeyLeft:
+		l.let.MoveCursorLeft()
+	case KeyRight:
+		l.let.MoveCursorRight()
+	case KeyBackspace:
+		l.let.DeleteSelected()
+	default:
+		l.let.AddCh(rune(key))
+	}
+	return nil
+}
+
+// Returns 1
+func (l LineEdit) Height() int {
+	return 1
+}
+
+// Returns the maxLength
+func (l LineEdit) Width() int {
+	return l.let.maxLen
+}

@@ -108,7 +108,7 @@ func createLineEditTemplate(text string, maxLen int) *lineEditTemplate {
 	result := lineEditTemplate{}
 	result.cursor = 0
 	result.content = text
-	result.blank = strings.Repeat(" ", maxLen)
+	result.blank = strings.Repeat("_", maxLen)
 	result.maxLen = maxLen
 	return &result
 }
@@ -141,7 +141,7 @@ func (l *lineEditTemplate) AddCh(ch rune) {
 func (l lineEditTemplate) Draw(win *nc.Window, yPos, xPos int, focused bool) error {
 	win.MovePrintf(yPos, xPos, l.blank)
 	win.MovePrintf(yPos, xPos, l.content)
-	if l.cursor < l.maxLen {
+	if focused && l.cursor < l.maxLen {
 		win.Move(yPos, xPos+l.cursor)
 		win.AttrOn(focusedAttribute)
 		win.Print(" ")
@@ -157,6 +157,16 @@ func (l *lineEditTemplate) DeleteSelected() {
 	}
 	l.content = l.content[:l.cursor-1] + l.content[l.cursor:]
 	l.MoveCursorLeft()
+}
+
+// Sets the text of the template
+func (l *lineEditTemplate) SetText(text string) error {
+	if len(text) > l.maxLen {
+		return fmt.Errorf("termui - can't set lineEditTemplate text to %v - maxLen is %v", text, l.maxLen)
+	}
+	l.content = text
+	l.cursor = len(l.content)
+	return nil
 }
 
 // Word choice template use for prompting user to pick a word from options
@@ -289,12 +299,6 @@ func sumInt(a ...int) int {
 		result += i
 	}
 	return result
-}
-
-func center(s string, n int, fill string) string {
-	div := n / 2
-
-	return strings.Repeat(fill, div) + s + strings.Repeat(fill, div)
 }
 
 // More convinient way to add to window with multiple attributes

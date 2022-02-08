@@ -27,7 +27,6 @@ type Drawable interface {
 
 // A UI element
 type UIElement interface {
-	hasElementData
 	Drawable
 
 	HandleKey(key nc.Key) error
