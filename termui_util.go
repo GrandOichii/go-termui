@@ -30,19 +30,6 @@ func isValidLineEditCh(ch rune) bool {
 	return ch == ' '
 }
 
-// Draws the list
-func drawList(win *nc.Window, y, x int, options []*CCTMessage, maxDisplayAmount, cursor, pageN int, focusSelected bool) error {
-	for i := 0; i < minInt(maxDisplayAmount, len(options)); i++ {
-		attr := nc.A_NORMAL
-		if i == cursor && focusSelected {
-			attr = nc.A_REVERSE
-		}
-		options[i+pageN].Draw(win, y+i, x, attr)
-		// put(win, y+i, x, options[i+pageN], attr)
-	}
-	return nil
-}
-
 // Returns the max element
 func maxInt(a ...int) int {
 	result := a[0]
@@ -81,6 +68,18 @@ func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 		defer win.AttrOff(attr)
 	}
 	win.MovePrint(y, x, line)
+}
+
+func ReverseColorPair(colorPair string) string {
+	split := strings.Split(colorPair, "-")
+	if len(split) == 1 {
+		return "normal-" + colorPair
+	}
+	result := ""
+	for _, s := range split {
+		result = "-" + s + result
+	}
+	return result[1:]
 }
 
 // Draws a box
@@ -242,7 +241,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	defer win.Clear()
 	win.Keypad(true)
 	DrawBorders(win, borderColor)
-	lt := createListTemplate(win, cctOptions, maxDisplayAmount)
+	lt := createListTemplate(cctOptions, maxDisplayAmount)
 	whiteSpace := strings.Repeat(" ", width-2)
 	bc, err := parseColorPair(borderColor)
 	if err != nil {
@@ -258,7 +257,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 			put(win, i, 1, whiteSpace)
 		}
 		// draw
-		lt.draw(1, 1, true)
+		lt.Draw(win, 1, 1, true)
 		win.AttrOn(bc)
 		if len(options) > maxDisplayAmount {
 			if lt.pageN != 0 {
@@ -275,9 +274,9 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 		case nc.KEY_ESC:
 			return nil, nil
 		case nc.KEY_UP:
-			lt.scrollUp()
+			lt.ScrollUp()
 		case nc.KEY_DOWN:
-			lt.scrollDown()
+			lt.ScrollDown()
 		case 10:
 			if lt.choice == -1 {
 				break
@@ -310,7 +309,7 @@ func EnterString(parent *Window, text string, prompt string, maxLength int, bord
 	x = cctprompt.Length() + 4
 	cctprompt.Draw(w, y, 2)
 	w.MovePrint(y, x-2, ": ")
-	let := createLineEditTemplate(text, maxLength)
+	let := CreateLineEditTemplate(text, maxLength)
 l:
 	for {
 		let.Draw(w, y, x, true)

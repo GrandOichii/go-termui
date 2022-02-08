@@ -288,7 +288,7 @@ func NewWordChoice(options []string, alignment Alignment, y, x int) (*WordChoice
 	result.IncKey = KeyRight
 	result.DecKey = KeyLeft
 	result.data = createUIED(y, x)
-	result.wct, err = createWordChoiceTemplate(options, alignment)
+	result.wct, err = CreateWordChoiceTemplate(options, alignment)
 	return &result, err
 }
 
@@ -337,7 +337,7 @@ type LineEdit struct {
 func NewLineEdit(text string, maxLength int, y, x int) (*LineEdit, error) {
 	result := LineEdit{}
 	result.data = createUIED(y, x)
-	result.let = createLineEditTemplate(text, maxLength)
+	result.let = CreateLineEditTemplate(text, maxLength)
 	return &result, nil
 }
 
@@ -386,4 +386,130 @@ func (l LineEdit) Height() int {
 // Returns the maxLength
 func (l LineEdit) Width() int {
 	return l.let.maxLen
+}
+
+// A list element
+type List struct {
+	data          *UIElementData
+	lt            *ListTemplate
+	bcolor        string
+	maxWidth      int
+	scrollUpKey   nc.Key
+	scrollDownKey nc.Key
+}
+
+// Creates a list element
+func NewList(options []string, maxDisplayAmount, y, x int, borderColorPair string) (*List, error) {
+	if len(options) == 0 {
+		return nil, fmt.Errorf("termui - can;t create List with no options")
+	}
+	result := List{}
+	result.lt = createListTemplate([]*CCTMessage{}, maxDisplayAmount)
+	result.data = createUIED(y, x)
+	result.bcolor = borderColorPair
+	result.scrollUpKey = '<'
+	result.scrollDownKey = '>'
+	result.SetOptions(options)
+	return &result, nil
+}
+
+func (l *List) AddOption(option string) error {
+	cct, err := ToCCTMessage(option)
+	if err != nil {
+		return err
+	}
+	l.lt.AddOption(cct)
+	return nil
+}
+
+func (l *List) SetOptions(options []string) error {
+	cct, err := GetCCTs(options)
+	if err != nil {
+		return err
+	}
+	l.lt.SetOptions(cct)
+	l.maxWidth = l.lt.options[0].Length()
+	for i, o := range l.lt.options {
+		if i == 0 {
+			continue
+		}
+		l.maxWidth = maxInt(l.maxWidth, o.Length())
+	}
+
+	return nil
+}
+
+// Returns the element data of the element
+func (l List) GetElementData() *UIElementData {
+	return l.data
+}
+
+// Draws the scroller
+func (l List) drawScroller(win *nc.Window) error {
+	if len(l.lt.options) > l.lt.maxDisplayAmount {
+		y := l.data.yPos
+		x := l.data.xPos
+		height := l.Height()
+		width := l.Width()
+		// draw the arrows
+		if l.lt.pageN != 0 {
+			win.MoveAddChar(1+y, l.Width()-2+x, nc.ACS_UARROW)
+		}
+		if l.lt.pageN != len(l.lt.options)-l.lt.maxDisplayAmount {
+			win.MoveAddChar(height-2+y, width-2+x, nc.ACS_DARROW)
+		}
+		// draw the line
+		scrollerL := height - 4
+		for i := 0; i < scrollerL; i++ {
+			win.MoveAddChar(2+y+i, width-2+x, nc.ACS_VLINE)
+		}
+		// draw the scroller
+		sbHeight := l.lt.maxDisplayAmount*scrollerL/len(l.lt.options) + 1
+		sbOffset := l.lt.pageN * scrollerL / len(l.lt.options)
+		// MessageBox(&Window{win: win}, l.bcolor, []string{}, "normal")
+		colorPair := ReverseColorPair(l.bcolor)
+		// MessageBox(&Window{win: win}, colorPair, []string{}, "normal")
+		color, err := parseColorPair(colorPair)
+		if err != nil {
+			return err
+		}
+		win.AttrOn(color)
+		for i := 0; i < sbHeight; i++ {
+			win.MoveAddChar(2+y+i+sbOffset, width-2+x, ' ')
+		}
+		win.AttrOff(color)
+	}
+	return nil
+}
+
+// Draws the list
+func (l List) Draw(win *nc.Window) error {
+	var err error
+	DrawBox(win, l.data.yPos, l.data.xPos, l.Height(), l.Width(), l.bcolor)
+	err = l.drawScroller(win)
+	if err != nil {
+		return err
+	}
+	return l.lt.Draw(win, l.data.yPos+1, l.data.xPos+1, l.data.focused)
+}
+
+// On scroll keys scrolls the list
+func (l List) HandleKey(key nc.Key) error {
+	switch key {
+	case l.scrollDownKey:
+		l.lt.ScrollDown()
+	case l.scrollUpKey:
+		l.lt.ScrollUp()
+	}
+	return nil
+}
+
+// Returns the height of the element
+func (l List) Height() int {
+	return l.lt.maxDisplayAmount + 2
+}
+
+// Returns the width of the list
+func (l List) Width() int {
+	return l.maxWidth + 4
 }

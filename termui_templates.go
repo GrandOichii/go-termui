@@ -3,6 +3,7 @@ package termui
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	nc "github.com/rthornton128/goncurses"
@@ -18,7 +19,6 @@ const (
 
 // List template. Use for drawing lists
 type ListTemplate struct {
-	win              *nc.Window
 	options          []*CCTMessage
 	maxDisplayAmount int
 	cursor           int
@@ -27,9 +27,8 @@ type ListTemplate struct {
 }
 
 // Creates a list template
-func createListTemplate(win *nc.Window, options []*CCTMessage, maxDisplayAmount int) *ListTemplate {
+func createListTemplate(options []*CCTMessage, maxDisplayAmount int) *ListTemplate {
 	result := ListTemplate{}
-	result.win = win
 	result.options = options
 	result.maxDisplayAmount = maxDisplayAmount
 	result.cursor = 0
@@ -39,12 +38,36 @@ func createListTemplate(win *nc.Window, options []*CCTMessage, maxDisplayAmount 
 }
 
 // Draws the list tamplate
-func (l ListTemplate) draw(y, x int, focusSelected bool) error {
-	return drawList(l.win, y, x, l.options, l.maxDisplayAmount, l.cursor, l.pageN, focusSelected)
+func (l ListTemplate) Draw(win *nc.Window, y, x int, focusSelected bool) error {
+	for i := 0; i < minInt(l.maxDisplayAmount, len(l.options)); i++ {
+		attr := nc.A_NORMAL
+		if i == l.cursor && focusSelected {
+			attr = nc.A_REVERSE
+		}
+		l.options[i+l.pageN].Draw(win, y+i, x, attr)
+		// put(win, y+i, x, options[i+pageN], attr)
+	}
+	return nil
+}
+
+// Sets the options
+func (l *ListTemplate) SetOptions(options []*CCTMessage) {
+	os.WriteFile("file.txt", []byte(fmt.Sprintf("%v-%v", len(l.options), len(options))), 0755)
+	if len(l.options) > len(options) {
+		l.cursor = 0
+		l.choice = 0
+		l.pageN = 0
+	}
+	l.options = options
+}
+
+// Adds an option
+func (l *ListTemplate) AddOption(option *CCTMessage) {
+	l.options = append(l.options, option)
 }
 
 // Moves the cursor of the list template up
-func (l *ListTemplate) scrollUp() {
+func (l *ListTemplate) ScrollUp() {
 	l.choice--
 	l.cursor--
 	if l.cursor < 0 {
@@ -65,7 +88,7 @@ func (l *ListTemplate) scrollUp() {
 }
 
 // Moves the cursor of the list tamplate down
-func (l *ListTemplate) scrollDown() {
+func (l *ListTemplate) ScrollDown() {
 	l.choice++
 	l.cursor++
 	if len(l.options) > l.maxDisplayAmount {
@@ -95,7 +118,7 @@ type LineEditTemplate struct {
 }
 
 // Creates the line edit template
-func createLineEditTemplate(text string, maxLen int) *LineEditTemplate {
+func CreateLineEditTemplate(text string, maxLen int) *LineEditTemplate {
 	result := LineEditTemplate{}
 	result.cursor = 0
 	result.content = text
@@ -169,7 +192,7 @@ type WordChoiceTemplate struct {
 }
 
 // Creates a word choice template
-func createWordChoiceTemplate(options []string, alignment Alignment) (*WordChoiceTemplate, error) {
+func CreateWordChoiceTemplate(options []string, alignment Alignment) (*WordChoiceTemplate, error) {
 	result := WordChoiceTemplate{}
 	var err error
 	if len(options) == 0 {
