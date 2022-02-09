@@ -3,7 +3,6 @@ package termui
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	nc "github.com/rthornton128/goncurses"
@@ -52,7 +51,6 @@ func (l ListTemplate) Draw(win *nc.Window, y, x int, focusSelected bool) error {
 
 // Sets the options
 func (l *ListTemplate) SetOptions(options []*CCTMessage) {
-	os.WriteFile("file.txt", []byte(fmt.Sprintf("%v-%v", len(l.options), len(options))), 0755)
 	if len(l.options) > len(options) {
 		l.cursor = 0
 		l.choice = 0

@@ -394,12 +394,14 @@ type List struct {
 	lt            *ListTemplate
 	bcolor        string
 	maxWidth      int
+	click         func(choice, cursor int, option *CCTMessage) error
 	scrollUpKey   nc.Key
 	scrollDownKey nc.Key
+	clickKey      nc.Key
 }
 
 // Creates a list element
-func NewList(options []string, maxDisplayAmount, y, x int, borderColorPair string) (*List, error) {
+func NewList(options []string, maxDisplayAmount int, optionClick func(choice, cursor int, option *CCTMessage) error, y, x int, borderColorPair string) (*List, error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("termui - can;t create List with no options")
 	}
@@ -407,12 +409,15 @@ func NewList(options []string, maxDisplayAmount, y, x int, borderColorPair strin
 	result.lt = createListTemplate([]*CCTMessage{}, maxDisplayAmount)
 	result.data = createUIED(y, x)
 	result.bcolor = borderColorPair
+	result.click = optionClick
 	result.scrollUpKey = '<'
 	result.scrollDownKey = '>'
+	result.clickKey = KeyEnter
 	result.SetOptions(options)
 	return &result, nil
 }
 
+// Adds an option to the template
 func (l *List) AddOption(option string) error {
 	cct, err := ToCCTMessage(option)
 	if err != nil {
@@ -422,6 +427,7 @@ func (l *List) AddOption(option string) error {
 	return nil
 }
 
+// Sets the options of the template
 func (l *List) SetOptions(options []string) error {
 	cct, err := GetCCTs(options)
 	if err != nil {
@@ -435,7 +441,6 @@ func (l *List) SetOptions(options []string) error {
 		}
 		l.maxWidth = maxInt(l.maxWidth, o.Length())
 	}
-
 	return nil
 }
 
@@ -500,6 +505,10 @@ func (l List) HandleKey(key nc.Key) error {
 		l.lt.ScrollDown()
 	case l.scrollUpKey:
 		l.lt.ScrollUp()
+	case l.clickKey:
+		if len(l.lt.options) > 0 {
+			return l.click(l.lt.choice, l.lt.cursor, l.lt.options[l.lt.choice])
+		}
 	}
 	return nil
 }
