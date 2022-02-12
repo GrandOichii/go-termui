@@ -7,6 +7,8 @@ import (
 func main() {
 	// create the window
 	w, _ := tui.CreateWindow("LineEdit tester")
+	// extract the menu
+	menu := w.GetMenu()
 	// create the label
 	label, _ := tui.NewLabel("Your name:", 1, 1)
 	// create the line edit
@@ -19,13 +21,13 @@ func main() {
 		return nil
 	}, tui.KeyEnter)
 	// add the elements
-	w.AddElement(button)
-	w.AddElement(lineedit)
-	w.AddElement(label)
+	menu.AddElement(button)
+	menu.AddElement(lineedit)
+	menu.AddElement(label)
 	// link the elements
 	tui.Link(lineedit, button)
 	// focus on the button
-	w.Focus(lineedit)
+	menu.Focus(lineedit)
 	// start the window
 	w.Start()
 }

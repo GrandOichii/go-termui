@@ -7,6 +7,8 @@ import (
 func main() {
 	// create the window
 	w, _ := tui.CreateWindow("DropDownBox tester")
+	// extract the menu
+	menu := w.GetMenu()
 	// create the button
 	button, _ := tui.NewButton("Press enter to click me!", 0, 0, func() error {
 		ddbOptions := []string{"Choose ${green}me", "or ${red}me", "${magenta-white}proably ${normal}me"}
@@ -20,9 +22,9 @@ func main() {
 		return nil
 	}, tui.KeyEnter)
 	// add the button to the window
-	w.AddElement(button)
+	menu.AddElement(button)
 	// focus on the button
-	w.Focus(button)
+	menu.Focus(button)
 	// start the window
 	w.Start()
 }

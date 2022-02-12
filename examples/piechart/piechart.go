@@ -10,7 +10,9 @@ var w *tui.Window
 
 func main() {
 	w, _ = tui.CreateWindow("${red}Pie chart test")
-	w.SetBorderColor("cyan")
+	// extract the menu
+	menu := w.GetMenu()
+	menu.(*tui.NormalMenu).SetBorderColor("cyan")
 
 	values := []int{1, 1, 1, 1}
 
@@ -32,11 +34,11 @@ func main() {
 			return nil
 		}, tui.KeyEnter)
 		buttons[i] = b
-		w.AddElement(b)
+		menu.AddElement(b)
 	}
 	tui.Link(buttons...)
-	w.Focus(buttons[0])
-	w.AddElement(piechart)
+	menu.Focus(buttons[0])
+	menu.AddElement(piechart)
 
 	w.Start()
 }

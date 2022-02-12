@@ -7,6 +7,8 @@ import (
 func main() {
 	// create the window
 	w, _ := tui.CreateWindow("${red}Multiple ${normal}elements")
+	// extract the menu
+	menu := w.GetMenu()
 	// create the first label
 	label1, _ := tui.NewLabel("Funny button", 1, 1)
 	// create the first button
@@ -27,16 +29,16 @@ func main() {
 	tui.SetPrevKey(button2, tui.KeyLeft)
 
 	// add all the elements
-	w.AddElement(label1)
-	w.AddElement(button1)
-	w.AddElement(label2)
-	w.AddElement(button2)
+	menu.AddElement(label1)
+	menu.AddElement(button1)
+	menu.AddElement(label2)
+	menu.AddElement(button2)
 
 	// link up all the buttons
 	tui.Link(button1, button2)
 
 	// focus on the first button
-	w.Focus(button1)
+	menu.Focus(button1)
 
 	// start the window
 	w.Start()

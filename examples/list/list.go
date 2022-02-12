@@ -9,10 +9,9 @@ import (
 func main() {
 	var list *tui.List
 	// create the window
-	w, err := tui.CreateWindow("Window with label")
-	if err != nil {
-		panic(err)
-	}
+	w, _ := tui.CreateWindow("Window with label")
+	// extract the menu
+	menu := w.GetMenu()
 	// create the options slice
 	options := []string{}
 	optionI := 0
@@ -26,25 +25,19 @@ func main() {
 	}
 	add()
 	// create the list
-	list, err = tui.NewList(options, 10, func(choice, cursor int, option *tui.CCTMessage) error {
+	list, _ = tui.NewList(options, 10, func(choice, cursor int, option *tui.CCTMessage) error {
 		tui.MessageBox(w, option.ToString(), []string{}, "normal")
 		return nil
 	}, 0, 0, "magenta")
-	if err != nil {
-		panic(err)
-	}
 	// create the button
 	button, _ := tui.NewButton("[click me]", 12, 2, add, tui.KeyEnter)
 	// add the elements
-	w.AddElement(list)
-	w.AddElement(button)
+	menu.AddElement(list)
+	menu.AddElement(button)
 	// link the elements
 	tui.Link(button, list)
 	// focus on the list
-	w.Focus(list)
+	menu.(*tui.NormalMenu).Focus(list)
 	// start the window
-	err = w.Start()
-	if err != nil {
-		panic(err)
-	}
+	w.Start()
 }

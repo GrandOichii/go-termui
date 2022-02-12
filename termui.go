@@ -17,12 +17,163 @@ const (
 )
 
 type hasElementData interface {
+	// Returns the element data of the element
 	GetElementData() *UIElementData
 }
 
 type Drawable interface {
 	hasElementData
+	// Draws the element to the window
 	Draw(win *nc.Window) error
+}
+
+type Menu interface {
+	SetParent(window *Window)
+	Draw() error
+	HandleKey(key nc.Key) error
+
+	AddElement(element UIElement)
+	GetElements() []UIElement
+	Focus(element hasElementData)
+}
+
+// The menu of the window
+type NormalMenu struct {
+	parent      *Window
+	focusedElID int
+	borderColor string
+	cctTitle    *CCTMessage
+	elements    []UIElement
+}
+
+// Creates a menu
+func CreateNormalMenu(title string) (*NormalMenu, error) {
+	result := NormalMenu{}
+	var err error
+	result.focusedElID = 0
+	result.cctTitle, err = ToCCTMessage(title)
+	if err != nil {
+		return nil, err
+	}
+	result.elements = []UIElement{}
+	result.borderColor = "normal"
+	return &result, nil
+}
+
+// Draws the menu
+func (m NormalMenu) Draw() error {
+	m.parent.win.Erase()
+	var err error
+	err = DrawBorders(m.parent.win, m.borderColor)
+	m.cctTitle.Draw(m.parent.win, 0, 1)
+	if err != nil {
+		return err
+	}
+	pWin := m.parent.win
+	for _, el := range m.elements {
+		elData := el.GetElementData()
+		if elData.Visible {
+			err = el.Draw(pWin)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Sets the border color of the menu
+func (m *NormalMenu) SetBorderColor(borderColor string) {
+	m.borderColor = borderColor
+}
+
+// Returns the element that is located at the point
+func (m NormalMenu) elementAt(y, x int) UIElement {
+	for _, el := range m.elements {
+		elData := el.GetElementData()
+		if y >= elData.yPos && y <= elData.yPos+el.Height() && x >= elData.xPos && x <= elData.xPos+el.Width() {
+			return el
+		}
+	}
+	return nil
+}
+
+// If esc is pressed, exits the application.
+// If mouse is clicked, focuses on the clicked element. If element is already focused, calls the HandleKey method in element.
+// Otherwise calls the HandleKey method in the focused element
+func (m *NormalMenu) HandleKey(key nc.Key) error {
+	if key == nc.KEY_ESC {
+		m.parent.Exit()
+		return nil
+	}
+	// if key == nc.KEY_MOUSE {
+	// 	md := nc.GetMouse()
+	// 	element := w.elementAt(md.Y, md.X)
+	// 	elData := element.GetElementData()
+	// 	if element == nil {
+	// 		return nil
+	// 	}
+	// 	if elData.focused {
+	// 		// MessageBox(w, fmt.Sprintf("%v", elData), []string{})
+	// 		element.HandleKey(key)
+	// 	} else {
+	// 		w.Focus(element)
+	// 	}
+	// 	return nil
+	// }
+	for _, el := range m.elements {
+		elData := el.GetElementData()
+		if elData.focused {
+			switch key {
+			case elData.nextKey:
+				// focus on the elData.next
+				if elData.next == nil {
+					continue
+				}
+				elData.focused = false
+				elData.next.GetElementData().focused = true
+			case elData.prevKey:
+				// focus on the elData.prev
+				if elData.prev == nil {
+					continue
+				}
+				elData.focused = false
+				elData.prev.GetElementData().focused = true
+			default:
+				el.HandleKey(key)
+			}
+			break
+		}
+	}
+	return nil
+}
+
+// Returns the elements of the menu
+func (m NormalMenu) GetElements() []UIElement {
+	return m.elements
+}
+
+// Adds the element to the menu
+func (m *NormalMenu) AddElement(element UIElement) {
+	m.elements = append(m.elements, element)
+}
+
+// Unfocuses all the elements in the menu
+func (m *NormalMenu) unfocusAll() {
+	for _, el := range m.elements {
+		el.GetElementData().focused = false
+	}
+}
+
+// Unfocuses all the elements in the menu, then focuses the element
+func (m *NormalMenu) Focus(element hasElementData) {
+	m.unfocusAll()
+	element.GetElementData().focused = true
+}
+
+// Sets the parent window of the menu
+func (m *NormalMenu) SetParent(window *Window) {
+	m.parent = window
 }
 
 // A UI element
@@ -90,48 +241,26 @@ func createUIED(y, x int) *UIElementData {
 
 // Standard window
 type Window struct {
-	Title string
-
 	height      int
 	width       int
-	focusedElID int
 	running     bool
-	borderColor string
-	cctTitle    *CCTMessage
-	elements    []UIElement
+	currentMenu Menu
 	win         *nc.Window
 }
 
-// Sets the border color of the window
-func (w *Window) SetBorderColor(borderColor string) {
-	w.borderColor = borderColor
+// Returns the current menu of the window
+func (w Window) GetMenu() Menu {
+	return w.currentMenu
+}
+
+// Sets the menu of the window
+func (w *Window) SetMenu(menu Menu) {
+	menu.SetParent(w)
 }
 
 // Returns the height and width of the window
 func (w Window) GetMaxYX() (int, int) {
 	return w.height, w.width
-}
-
-// Draws the window
-func (w Window) Draw() error {
-	w.win.Erase()
-	var err error
-	err = DrawBorders(w.win, w.borderColor)
-	w.cctTitle.Draw(w.win, 0, 1)
-	if err != nil {
-		return err
-	}
-	pWin := w.win
-	for _, el := range w.elements {
-		elData := el.GetElementData()
-		if elData.Visible {
-			err = el.Draw(pWin)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // Retunrs GetChar result
@@ -148,72 +277,6 @@ func (w Window) GetWin() *nc.Window {
 func (w *Window) Exit() {
 	w.running = false
 	nc.End()
-}
-
-// Returns the element that is located at the point
-func (w Window) elementAt(y, x int) UIElement {
-	for _, el := range w.elements {
-		elData := el.GetElementData()
-		if y >= elData.yPos && y <= elData.yPos+el.Height() && x >= elData.xPos && x <= elData.xPos+el.Width() {
-			return el
-		}
-	}
-	return nil
-}
-
-// If esc is pressed, exits the application.
-// If mouse is clicked, focuses on the clicked element. If element is already focused, calls the HandleKey method in element.
-// Otherwise calls the HandleKey method in the focused element
-func (w *Window) HandleKey(key nc.Key) error {
-	if key == nc.KEY_ESC {
-		w.Exit()
-		return nil
-	}
-	// if key == nc.KEY_MOUSE {
-	// 	md := nc.GetMouse()
-	// 	element := w.elementAt(md.Y, md.X)
-	// 	elData := element.GetElementData()
-	// 	if element == nil {
-	// 		return nil
-	// 	}
-	// 	if elData.focused {
-	// 		// MessageBox(w, fmt.Sprintf("%v", elData), []string{})
-	// 		element.HandleKey(key)
-	// 	} else {
-	// 		w.Focus(element)
-	// 	}
-	// 	return nil
-	// }
-	for _, el := range w.elements {
-		elData := el.GetElementData()
-		if elData.focused {
-			switch key {
-			case elData.nextKey:
-				// focus on the elData.next
-				if elData.next == nil {
-					continue
-				}
-				elData.focused = false
-				elData.next.GetElementData().focused = true
-			case elData.prevKey:
-				// focus on the elData.prev
-				if elData.prev == nil {
-					continue
-				}
-				elData.focused = false
-				elData.prev.GetElementData().focused = true
-			default:
-				el.HandleKey(key)
-			}
-			break
-		}
-	}
-	return nil
-}
-
-// Returns the elements of the window
-func (w Window) GetElements() []UIElement {
-	return w.elements
 }
 
 // Basic goncurses configuration
@@ -244,13 +307,13 @@ func (w *Window) Start() error {
 	var key nc.Key
 	for w.running {
 		// draw
-		err = w.Draw()
+		err = w.currentMenu.Draw()
 		if err != nil {
 			return err
 		}
 		// handle key
 		key = w.GetKey()
-		err = w.HandleKey(key)
+		err = w.currentMenu.HandleKey(key)
 		if err != nil {
 			return err
 		}
@@ -258,25 +321,9 @@ func (w *Window) Start() error {
 	return nil
 }
 
-// Adds the element to the window
-func (w *Window) AddElement(element UIElement) {
-	w.elements = append(w.elements, element)
-}
-
-// Unfocuses all the elements in the window, then focuses the element
-func (w *Window) Focus(element hasElementData) {
-	w.unfocusAll()
-	element.GetElementData().focused = true
-}
-
-// Unfocuses all the elements in the window
-func (w *Window) unfocusAll() {
-	for _, el := range w.elements {
-		el.GetElementData().focused = false
-	}
-}
-
 // Creates new window (should only be called once)
+//
+// The menu of the window is of type NormalMenu
 func CreateWindow(title string) (*Window, error) {
 	var err error
 	result := Window{}
@@ -285,15 +332,12 @@ func CreateWindow(title string) (*Window, error) {
 		return nil, err
 	}
 	initColors()
-	result.focusedElID = 0
-	result.Title = title
-	result.cctTitle, err = ToCCTMessage(title)
+	result.running = false
+	result.currentMenu, err = CreateNormalMenu(title)
 	if err != nil {
 		return nil, err
 	}
-	result.running = false
-	result.elements = []UIElement{}
-	result.borderColor = "normal"
+	result.currentMenu.SetParent(&result)
 	return &result, nil
 }
 

@@ -297,6 +297,7 @@ func (w WordChoice) GetSelected() *CCTMessage {
 	return w.wct.GetSelected()
 }
 
+// Draws the WordChoice element
 func (w WordChoice) Draw(win *nc.Window) error {
 	return w.wct.Draw(win, w.data.yPos, w.data.xPos, w.data.focused)
 }
