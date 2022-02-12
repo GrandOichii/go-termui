@@ -47,7 +47,7 @@ type NormalMenu struct {
 }
 
 // Creates a menu
-func CreateNormalMenu(title string) (*NormalMenu, error) {
+func NewNormalMenu(title string) (*NormalMenu, error) {
 	result := NormalMenu{}
 	var err error
 	result.focusedElID = 0
@@ -256,6 +256,7 @@ func (w Window) GetMenu() Menu {
 // Sets the menu of the window
 func (w *Window) SetMenu(menu Menu) {
 	menu.SetParent(w)
+	w.currentMenu = menu
 }
 
 // Returns the height and width of the window
@@ -333,7 +334,7 @@ func CreateWindow(title string) (*Window, error) {
 	}
 	initColors()
 	result.running = false
-	result.currentMenu, err = CreateNormalMenu(title)
+	result.currentMenu, err = NewNormalMenu(title)
 	if err != nil {
 		return nil, err
 	}
