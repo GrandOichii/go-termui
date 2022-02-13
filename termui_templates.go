@@ -18,7 +18,7 @@ const (
 
 // List template. Use for drawing lists
 type ListTemplate struct {
-	options          []*CCTMessage
+	options          []DrawableAsLine
 	maxDisplayAmount int
 	cursor           int
 	choice           int
@@ -26,7 +26,7 @@ type ListTemplate struct {
 }
 
 // Creates a list template
-func createListTemplate(options []*CCTMessage, maxDisplayAmount int) *ListTemplate {
+func createListTemplate(options []DrawableAsLine, maxDisplayAmount int) *ListTemplate {
 	result := ListTemplate{}
 	result.options = options
 	result.maxDisplayAmount = maxDisplayAmount
@@ -50,7 +50,7 @@ func (l ListTemplate) Draw(win *nc.Window, y, x int, focusSelected bool) error {
 }
 
 // Sets the options
-func (l *ListTemplate) SetOptions(options []*CCTMessage) {
+func (l *ListTemplate) SetOptions(options []DrawableAsLine) {
 	if len(l.options) > len(options) {
 		l.cursor = 0
 		l.choice = 0
@@ -60,7 +60,7 @@ func (l *ListTemplate) SetOptions(options []*CCTMessage) {
 }
 
 // Adds an option
-func (l *ListTemplate) AddOption(option *CCTMessage) {
+func (l *ListTemplate) AddOption(option DrawableAsLine) {
 	l.options = append(l.options, option)
 }
 
@@ -186,11 +186,12 @@ type WordChoiceTemplate struct {
 	options []*CCTMessage
 	choice  int
 	maxLen  int
+	acolor  nc.Char
 	al      Alignment
 }
 
 // Creates a word choice template
-func CreateWordChoiceTemplate(options []string, alignment Alignment) (*WordChoiceTemplate, error) {
+func CreateWordChoiceTemplate(options []string, alignment Alignment, arrowColor string) (*WordChoiceTemplate, error) {
 	result := WordChoiceTemplate{}
 	var err error
 	if len(options) == 0 {
@@ -209,7 +210,8 @@ func CreateWordChoiceTemplate(options []string, alignment Alignment) (*WordChoic
 		result.maxLen = maxInt(result.maxLen, o.Length())
 	}
 	result.al = alignment
-	return &result, nil
+	result.acolor, err = parseColorPair(arrowColor)
+	return &result, err
 }
 
 // Returns the currently focused option
@@ -238,8 +240,10 @@ func (w WordChoiceTemplate) Draw(win *nc.Window, y, x int, focused bool) error {
 	if focused {
 		win.AttrOn(focusedAttribute)
 	}
+	win.AttrOn(w.acolor)
 	win.MoveAddChar(y, x, '<')
 	win.MoveAddChar(y, x+w.maxLen+1, '>')
+	win.AttrOff(w.acolor)
 	if focused {
 		win.AttrOff(focusedAttribute)
 	}

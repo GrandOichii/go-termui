@@ -10,36 +10,27 @@ func main() {
 	// extract the menu
 	menu := w.GetMenu()
 	// create the first label
-	label1, _ := tui.NewLabel("Funny button", 1, 1)
+	tui.NewLabel(menu, 1, 1, "Funny button")
 	// create the first button
-	button1, _ := tui.NewButton("Click", 2, 1, func() error {
+	button1, _ := tui.NewButton(menu, 2, 1, "Click", func() error {
 		tui.MessageBox(w, "Funny button clicked", []string{}, "normal")
 		return nil
 	}, tui.KeyEnter)
 	tui.SetNextKey(button1, tui.KeyRight)
 	tui.SetPrevKey(button1, tui.KeyLeft)
 	// create the second label
-	label2, _ := tui.NewLabel("Exit button", 1, 21)
+	tui.NewLabel(menu, 1, 21, "Exit button")
 	// create the second button
-	button2, _ := tui.NewButton("Click", 2, 21, func() error {
+	button2, _ := tui.NewButton(menu, 2, 21, "Click", func() error {
 		w.Exit()
 		return nil
 	}, tui.KeyEnter)
 	tui.SetNextKey(button2, tui.KeyRight)
 	tui.SetPrevKey(button2, tui.KeyLeft)
-
-	// add all the elements
-	menu.AddElement(label1)
-	menu.AddElement(button1)
-	menu.AddElement(label2)
-	menu.AddElement(button2)
-
 	// link up all the buttons
 	tui.Link(button1, button2)
-
 	// focus on the first button
 	menu.Focus(button1)
-
 	// start the window
 	w.Start()
 }

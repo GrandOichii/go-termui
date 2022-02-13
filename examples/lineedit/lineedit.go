@@ -10,20 +10,14 @@ func main() {
 	// extract the menu
 	menu := w.GetMenu()
 	// create the label
-	label, _ := tui.NewLabel("Your name:", 1, 1)
+	tui.NewLabel(menu, 1, 1, "Your name:")
 	// create the line edit
-
-	lineedit, _ := tui.NewLineEdit("", 20, 1, 12)
-
+	lineedit, _ := tui.NewLineEdit(menu, 1, 12, "", 20, "normal")
 	// create the button
-	button, _ := tui.NewButton("[click me]", 2, 12, func() error {
+	button, _ := tui.NewButton(menu, 2, 12, "[click me]", func() error {
 		tui.MessageBox(w, "Your name is ${red}"+lineedit.GetText(), []string{}, "normal")
 		return nil
 	}, tui.KeyEnter)
-	// add the elements
-	menu.AddElement(button)
-	menu.AddElement(lineedit)
-	menu.AddElement(label)
 	// link the elements
 	tui.Link(lineedit, button)
 	// focus on the button

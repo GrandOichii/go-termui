@@ -2,30 +2,18 @@ package main
 
 import tui "github.com/GrandOichii/go-termui"
 
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func main() {
-	w, err := tui.CreateWindow("Menu 1")
-	checkErr(err)
+	w, _ := tui.CreateWindow("Menu 1")
 	firstMenu := w.GetMenu()
-	secondMenu, err := tui.NewNormalMenu("${red-cyan}Menu 2")
-	checkErr(err)
-	b1, err := tui.NewButton("[click me]", 1, 1, func() error {
+	secondMenu, _ := tui.NewNormalMenu("${red-cyan}Menu 2")
+	b1, _ := tui.NewButton(firstMenu, 1, 1, "[click me]", func() error {
 		w.SetMenu(secondMenu)
 		return nil
 	}, tui.KeyEnter)
-	checkErr(err)
-	b2, err := tui.NewButton("${red-cyan}[go back]", 5, 5, func() error {
+	b2, _ := tui.NewButton(secondMenu, 5, 5, "${red-cyan}[go back]", func() error {
 		w.SetMenu(firstMenu)
 		return nil
 	}, tui.KeyEnter)
-	checkErr(err)
-	firstMenu.AddElement(b1)
-	secondMenu.AddElement(b2)
 	firstMenu.Focus(b1)
 	secondMenu.Focus(b2)
 	secondMenu.SetBorderColor("red-cyan")

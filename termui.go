@@ -22,9 +22,12 @@ type hasElementData interface {
 }
 
 type Drawable interface {
-	hasElementData
-	// Draws the element to the window
-	Draw(win *nc.Window) error
+	Draw(win *nc.Window, y, x int, attr ...nc.Char)
+}
+
+type DrawableAsLine interface {
+	Drawable
+	Length() int
 }
 
 type Menu interface {
@@ -85,6 +88,13 @@ func (m NormalMenu) Draw() error {
 // Sets the border color of the menu
 func (m *NormalMenu) SetBorderColor(borderColor string) {
 	m.borderColor = borderColor
+}
+
+// Sets the title of the menu
+func (m *NormalMenu) SetTitle(title string) error {
+	var err error
+	m.cctTitle, err = ToCCTMessage(title)
+	return err
 }
 
 // Returns the element that is located at the point
@@ -178,8 +188,9 @@ func (m *NormalMenu) SetParent(window *Window) {
 
 // A UI element
 type UIElement interface {
-	Drawable
+	hasElementData
 
+	Draw(win *nc.Window) error
 	HandleKey(key nc.Key) error
 	Height() int
 	Width() int

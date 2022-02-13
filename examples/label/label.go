@@ -10,9 +10,7 @@ func main() {
 	// extract the menu
 	menu := w.GetMenu()
 	// create the label
-	label, _ := tui.NewLabel("I am a label (Press escape to quit)", 0, 0)
-	// add the label to the window
-	menu.AddElement(label)
+	tui.NewLabel(menu, 0, 0, "I am a label (Press escape to quit)")
 	// start the window
 	w.Start()
 }

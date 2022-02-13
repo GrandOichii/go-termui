@@ -241,7 +241,11 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	defer win.Clear()
 	win.Keypad(true)
 	DrawBorders(win, borderColor)
-	lt := createListTemplate(cctOptions, maxDisplayAmount)
+	moptions := make([]DrawableAsLine, 0, len(cctOptions))
+	for _, o := range cctOptions {
+		moptions = append(moptions, o)
+	}
+	lt := createListTemplate(moptions, maxDisplayAmount)
 	whiteSpace := strings.Repeat(" ", width-2)
 	bc, err := parseColorPair(borderColor)
 	if err != nil {

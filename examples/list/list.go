@@ -13,27 +13,26 @@ func main() {
 	// extract the menu
 	menu := w.GetMenu()
 	// create the options slice
-	options := []string{}
+	options := []tui.DrawableAsLine{}
 	optionI := 0
 	add := func() error {
-		options = append(options, fmt.Sprintf("value - *%v*", optionI))
+		m, _ := tui.ToCCTMessage(fmt.Sprintf("value - *%v*", optionI))
+		options = append(options, m)
 		optionI++
 		if list != nil {
 			list.SetOptions(options)
 		}
 		return nil
 	}
+	// add the first element
 	add()
 	// create the list
-	list, _ = tui.NewList(options, 10, func(choice, cursor int, option *tui.CCTMessage) error {
-		tui.MessageBox(w, option.ToString(), []string{}, "normal")
+	list, _ = tui.NewList(menu, 0, 0, options, 10, func(choice, cursor int, option tui.DrawableAsLine) error {
+		tui.MessageBox(w, option.(*tui.CCTMessage).ToString(), []string{}, "normal")
 		return nil
-	}, 0, 0, "magenta")
+	}, "magenta")
 	// create the button
-	button, _ := tui.NewButton("[click me]", 12, 2, add, tui.KeyEnter)
-	// add the elements
-	menu.AddElement(list)
-	menu.AddElement(button)
+	button, _ := tui.NewButton(menu, 12, 2, "[click me]", add, tui.KeyEnter)
 	// link the elements
 	tui.Link(button, list)
 	// focus on the list

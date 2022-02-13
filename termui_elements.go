@@ -20,7 +20,7 @@ type Label struct {
 }
 
 // Creates a new label
-func NewLabel(text string, y, x int) (*Label, error) {
+func NewLabel(menu Menu, y, x int, text string) (*Label, error) {
 	result := Label{}
 	var err error
 	result.cctText, err = ToCCTMessage(text)
@@ -28,6 +28,7 @@ func NewLabel(text string, y, x int) (*Label, error) {
 		return nil, err
 	}
 	result.data = createUIED(y, x)
+	menu.AddElement(&result)
 	return &result, nil
 }
 
@@ -65,7 +66,59 @@ func (l Label) Width() int {
 	return l.cctText.Length()
 }
 
-// A clickable button
+// A separator element
+type Separator struct {
+	data   *UIElementData
+	bcolor nc.Char
+}
+
+// Creates a separator
+func NewSeparator(menu Menu, y int, borderColor string) (*Separator, error) {
+	result := Separator{}
+	var err error
+	result.data = createUIED(y, 0)
+	result.bcolor, err = parseColorPair(borderColor)
+	if err != nil {
+		return nil, err
+	}
+	menu.AddElement(&result)
+	return &result, nil
+}
+
+// Returns the element data of the separator
+func (s Separator) GetElementData() *UIElementData {
+	return s.data
+}
+
+// Draws the separator
+func (s Separator) Draw(win *nc.Window) error {
+	_, width := win.MaxYX()
+	win.AttrOn(s.bcolor)
+	win.MoveAddChar(s.data.yPos, 0, nc.ACS_LTEE)
+	for i := 1; i < width-1; i++ {
+		win.MoveAddChar(s.data.yPos, i, nc.ACS_HLINE)
+	}
+	win.MoveAddChar(s.data.yPos, width-1, nc.ACS_RTEE)
+	win.AttrOff(s.bcolor)
+	return nil
+}
+
+// Doesn't do anything
+func (s Separator) HandleKey(key nc.Key) error {
+	return nil
+}
+
+// Returns 1
+func (s Separator) Height() int {
+	return 1
+}
+
+// Redundant - separator's width is determined by the width of the window
+func (s Separator) Width() int {
+	return -1
+}
+
+// A clickable button element
 type Button struct {
 	click    func() error
 	clickKey nc.Key
@@ -74,7 +127,7 @@ type Button struct {
 }
 
 // Creates a new button
-func NewButton(text string, y, x int, click func() error, clickKey nc.Key) (*Button, error) {
+func NewButton(menu Menu, y, x int, text string, click func() error, clickKey nc.Key) (*Button, error) {
 	result := Button{}
 	err := result.SetText(text)
 	if err != nil {
@@ -83,6 +136,7 @@ func NewButton(text string, y, x int, click func() error, clickKey nc.Key) (*But
 	result.click = click
 	result.clickKey = clickKey
 	result.data = createUIED(y, x)
+	menu.AddElement(&result)
 	return &result, nil
 }
 
@@ -93,7 +147,6 @@ func (b Button) Draw(win *nc.Window) error {
 		attr = hightlightKey
 	}
 	b.cctText.Draw(win, b.data.yPos, b.data.xPos, attr)
-	// put(pWin, data.yPos, data.xPos, b.text, attr)
 	return nil
 }
 
@@ -102,6 +155,11 @@ func (b *Button) SetText(text string) error {
 	var err error
 	b.cctText, err = ToCCTMessage(text)
 	return err
+}
+
+// Returns the text of the button
+func (b Button) GetText() string {
+	return b.cctText.ToString()
 }
 
 // On ENTER or mouse click calls click
@@ -143,7 +201,7 @@ type PieChart struct {
 }
 
 // Creates a color pie chart element.
-func NewPieChart(win *Window, y, x, height, width int, values []int, colorPairs []string, borderColor string) (*PieChart, error) {
+func NewPieChart(menu Menu, y, x, height, width int, values []int, colorPairs []string, borderColor string) (*PieChart, error) {
 	var err error
 	result := PieChart{}
 	result.height = height
@@ -170,6 +228,7 @@ func NewPieChart(win *Window, y, x, height, width int, values []int, colorPairs 
 			return nil, err
 		}
 	}
+	menu.AddElement(&result)
 	return &result, nil
 }
 
@@ -282,14 +341,23 @@ type WordChoice struct {
 }
 
 // Creates a word choice element
-func NewWordChoice(options []string, alignment Alignment, y, x int) (*WordChoice, error) {
+func NewWordChoice(menu Menu, y, x int, options []string, alignment Alignment, arrowColor string) (*WordChoice, error) {
 	var err error
 	result := WordChoice{}
 	result.IncKey = KeyRight
 	result.DecKey = KeyLeft
 	result.data = createUIED(y, x)
-	result.wct, err = CreateWordChoiceTemplate(options, alignment)
-	return &result, err
+	result.wct, err = CreateWordChoiceTemplate(options, alignment, arrowColor)
+	if err != nil {
+		return nil, err
+	}
+	menu.AddElement(&result)
+	return &result, nil
+}
+
+// Resets the choice
+func (w *WordChoice) Reset() {
+	w.wct.choice = 0
 }
 
 // Returns the currently selected option
@@ -330,15 +398,22 @@ func (w WordChoice) Width() int {
 
 // A line edit element
 type LineEdit struct {
-	let  *LineEditTemplate
-	data *UIElementData
+	let    *LineEditTemplate
+	data   *UIElementData
+	tcolor nc.Char
 }
 
 // Creates a new line edit element
-func NewLineEdit(text string, maxLength int, y, x int) (*LineEdit, error) {
+func NewLineEdit(menu Menu, y, x int, text string, maxLength int, textColor string) (*LineEdit, error) {
 	result := LineEdit{}
 	result.data = createUIED(y, x)
 	result.let = CreateLineEditTemplate(text, maxLength)
+	var err error
+	result.tcolor, err = parseColorPair(textColor)
+	if err != nil {
+		return nil, err
+	}
+	menu.AddElement(&result)
 	return &result, nil
 }
 
@@ -359,6 +434,8 @@ func (l LineEdit) GetElementData() *UIElementData {
 
 // Draws the element
 func (l LineEdit) Draw(win *nc.Window) error {
+	win.AttrOn(l.tcolor)
+	defer win.AttrOff(l.tcolor)
 	return l.let.Draw(win, l.data.yPos, l.data.xPos, l.data.focused)
 }
 
@@ -395,19 +472,19 @@ type List struct {
 	lt            *ListTemplate
 	bcolor        string
 	maxWidth      int
-	click         func(choice, cursor int, option *CCTMessage) error
+	click         func(choice, cursor int, option DrawableAsLine) error
 	scrollUpKey   nc.Key
 	scrollDownKey nc.Key
 	clickKey      nc.Key
 }
 
 // Creates a list element
-func NewList(options []string, maxDisplayAmount int, optionClick func(choice, cursor int, option *CCTMessage) error, y, x int, borderColorPair string) (*List, error) {
+func NewList(menu Menu, y, x int, options []DrawableAsLine, maxDisplayAmount int, optionClick func(choice, cursor int, option DrawableAsLine) error, borderColorPair string) (*List, error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("termui - can;t create List with no options")
 	}
 	result := List{}
-	result.lt = createListTemplate([]*CCTMessage{}, maxDisplayAmount)
+	result.lt = createListTemplate([]DrawableAsLine{}, maxDisplayAmount)
 	result.data = createUIED(y, x)
 	result.bcolor = borderColorPair
 	result.click = optionClick
@@ -415,26 +492,18 @@ func NewList(options []string, maxDisplayAmount int, optionClick func(choice, cu
 	result.scrollDownKey = '>'
 	result.clickKey = KeyEnter
 	result.SetOptions(options)
+	menu.AddElement(&result)
 	return &result, nil
 }
 
 // Adds an option to the template
-func (l *List) AddOption(option string) error {
-	cct, err := ToCCTMessage(option)
-	if err != nil {
-		return err
-	}
-	l.lt.AddOption(cct)
-	return nil
+func (l *List) AddOption(option DrawableAsLine) {
+	l.lt.AddOption(option)
 }
 
 // Sets the options of the template
-func (l *List) SetOptions(options []string) error {
-	cct, err := GetCCTs(options)
-	if err != nil {
-		return err
-	}
-	l.lt.SetOptions(cct)
+func (l *List) SetOptions(options []DrawableAsLine) {
+	l.lt.SetOptions(options)
 	l.maxWidth = l.lt.options[0].Length()
 	for i, o := range l.lt.options {
 		if i == 0 {
@@ -442,7 +511,6 @@ func (l *List) SetOptions(options []string) error {
 		}
 		l.maxWidth = maxInt(l.maxWidth, o.Length())
 	}
-	return nil
 }
 
 // Returns the element data of the element

@@ -10,12 +10,10 @@ func main() {
 	// get the menu of the window
 	menu := w.GetMenu()
 	// create the button
-	button, _ := tui.NewButton("Press enter to click me!", 0, 0, func() error {
+	button, _ := tui.NewButton(menu, 0, 0, "Press enter to click me!", func() error {
 		tui.Beep()
 		return nil
 	}, tui.KeyEnter)
-	// add the button to the window
-	menu.AddElement(button)
 	// set focus on the button
 	menu.Focus(button)
 	// start the window

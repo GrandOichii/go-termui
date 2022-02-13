@@ -76,10 +76,10 @@ func (m CCTMessage) ToString() string {
 }
 
 // Draws the CCTMessage
-func (m CCTMessage) Draw(win *nc.Window, y, x int, attrs ...nc.Char) {
+func (m CCTMessage) Draw(win *nc.Window, y, x int, attr ...nc.Char) {
 	for i := 0; i < m.pairCount(); i++ {
 		s, color := m.pair(i)
-		put(win, y, x, s, append(attrs, color)...)
+		put(win, y, x, s, append(attr, color)...)
 		x += len(s)
 	}
 }
