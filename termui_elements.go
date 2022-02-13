@@ -484,7 +484,7 @@ func NewList(menu Menu, y, x int, options []DrawableAsLine, maxDisplayAmount int
 		return nil, fmt.Errorf("termui - can;t create List with no options")
 	}
 	result := List{}
-	result.lt = createListTemplate([]DrawableAsLine{}, maxDisplayAmount)
+	result.lt = CreateListTemplate([]DrawableAsLine{}, maxDisplayAmount)
 	result.data = createUIED(y, x)
 	result.bcolor = borderColorPair
 	result.click = optionClick
@@ -590,4 +590,53 @@ func (l List) Height() int {
 // Returns the width of the list
 func (l List) Width() int {
 	return l.maxWidth + 4
+}
+
+// A progress bar element
+type ProgressBar struct {
+	data *UIElementData
+	pbt  *ProgressBarTemplate
+}
+
+// Creates a new progress bar
+func NewProgressBar(menu Menu, y, x, barLength, max int, showInfo bool, barColor string, infoColor string) (*ProgressBar, error) {
+	result := ProgressBar{}
+	result.data = createUIED(y, x)
+	var err error
+	result.pbt, err = CreateProgressBarTemplate(barLength, max, showInfo, barColor, infoColor)
+	if err != nil {
+		return nil, err
+	}
+	menu.AddElement(&result)
+	return &result, nil
+}
+
+// Sets the current value of the progress bar
+func (p *ProgressBar) Set(value int) {
+	p.pbt.Set(value)
+}
+
+// Returns the element data of the element
+func (p ProgressBar) GetElementData() *UIElementData {
+	return p.data
+}
+
+// Draws the element
+func (p ProgressBar) Draw(win *nc.Window) error {
+	return p.pbt.Draw(win, p.data.yPos, p.data.xPos)
+}
+
+// Doesn't do anthing
+func (p ProgressBar) HandleKey(key nc.Key) error {
+	return nil
+}
+
+// Returns 1
+func (p ProgressBar) Height() int {
+	return 1
+}
+
+// Returns barLength + length of space, required for info
+func (p ProgressBar) Width() int {
+	return len(p.pbt.clears)
 }

@@ -245,7 +245,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	for _, o := range cctOptions {
 		moptions = append(moptions, o)
 	}
-	lt := createListTemplate(moptions, maxDisplayAmount)
+	lt := CreateListTemplate(moptions, maxDisplayAmount)
 	whiteSpace := strings.Repeat(" ", width-2)
 	bc, err := parseColorPair(borderColor)
 	if err != nil {

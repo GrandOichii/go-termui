@@ -82,6 +82,7 @@ func (m NormalMenu) Draw() error {
 			}
 		}
 	}
+	m.parent.win.Refresh()
 	return nil
 }
 

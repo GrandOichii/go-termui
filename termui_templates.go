@@ -3,6 +3,7 @@ package termui
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	nc "github.com/rthornton128/goncurses"
@@ -11,6 +12,8 @@ import (
 type Alignment int
 
 const (
+	progressBarUnit = '#'
+
 	AlignLeft Alignment = iota
 	AlignRight
 	AlignCenter
@@ -26,7 +29,7 @@ type ListTemplate struct {
 }
 
 // Creates a list template
-func createListTemplate(options []DrawableAsLine, maxDisplayAmount int) *ListTemplate {
+func CreateListTemplate(options []DrawableAsLine, maxDisplayAmount int) *ListTemplate {
 	result := ListTemplate{}
 	result.options = options
 	result.maxDisplayAmount = maxDisplayAmount
@@ -257,4 +260,68 @@ func (w WordChoiceTemplate) Draw(win *nc.Window, y, x int, focused bool) error {
 	}
 	option.Draw(win, y, xl)
 	return nil
+}
+
+// A progress bar template
+type ProgressBarTemplate struct {
+	barLength int
+	max       int
+	maxs      string
+	current   int
+	clears    string
+	si        bool
+	bcolor    nc.Char
+	icolor    nc.Char
+}
+
+// Creates a progress bar template
+func CreateProgressBarTemplate(barLength, max int, showInfo bool, barColor string, infoColor string) (*ProgressBarTemplate, error) {
+	result := ProgressBarTemplate{}
+	result.barLength = barLength
+	result.max = max
+	result.current = 0
+	var err error
+	result.bcolor, err = parseColorPair(barColor)
+	if err != nil {
+		return nil, err
+	}
+	result.icolor, err = parseColorPair(infoColor)
+	if err != nil {
+		return nil, err
+	}
+	result.clears = "[" + strings.Repeat(" ", barLength) + "]"
+	if showInfo {
+		ispace := strings.Repeat(" ", len(strconv.Itoa(max)))
+		result.clears += " (" + ispace + "/" + ispace + ")"
+	}
+	result.si = showInfo
+	result.maxs = strconv.Itoa(max)
+	return &result, nil
+}
+
+// Sets the current value of the template
+func (p *ProgressBarTemplate) Set(value int) {
+	p.current = value
+	if value > p.max {
+		p.current = p.max
+	}
+}
+
+// Draws the template
+func (p ProgressBarTemplate) Draw(win *nc.Window, y, x int) error {
+	win.AttrOn(p.icolor)
+	// draw the white space
+	win.MovePrint(y, x, p.clears)
+	if p.si {
+		// draw the info
+		win.MovePrint(y, x+p.barLength+4, strconv.Itoa(p.current))
+		win.MovePrint(y, len(p.clears)-len(p.maxs)+1, strconv.Itoa(p.max))
+	}
+	win.AttrOff(p.icolor)
+	// draw the bar
+	l := p.current * p.barLength / p.max
+	s := strings.Repeat(string(progressBarUnit), l)
+	put(win, y, x+1, s, p.bcolor)
+	return nil
+
 }
