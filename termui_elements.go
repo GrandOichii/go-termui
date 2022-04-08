@@ -77,7 +77,7 @@ func NewSeparator(menu Menu, y int, borderColor string) (*Separator, error) {
 	result := Separator{}
 	var err error
 	result.data = createUIED(y, 0)
-	result.bcolor, err = parseColorPair(borderColor)
+	result.bcolor, err = ParseColorPair(borderColor)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func NewPieChart(menu Menu, y, x, height, width int, values []int, colorPairs []
 		result.colors = make([]nc.Char, 0, len(values))
 		for i := startingColor; i < len(values)*colorStep+startingColor; i += colorStep {
 			pair := strconv.Itoa(i) + "-normal"
-			color, err := parseColorPair(pair)
+			color, err := ParseColorPair(pair)
 			if err != nil {
 				return nil, err
 			}
@@ -244,7 +244,7 @@ func (p PieChart) Draw(win *nc.Window) error {
 	xPos := p.data.xPos
 	centerY := p.height/2 + yPos
 	centerX := p.width/2 + xPos
-	radius := minInt(p.height/2, p.width/2) - 1
+	radius := MinInt(p.height/2, p.width/2) - 1
 	DrawBox(win, yPos, xPos, p.height, p.width, p.bcolor)
 	win.MovePrintf(yPos, xPos, "%v", p.values)
 	for i := 0; i < p.height; i++ {
@@ -301,7 +301,7 @@ func (p PieChart) Width() int {
 
 // Set the values of the pie chart
 func (p *PieChart) SetValues(values []int) {
-	p.total = sumInt(values...)
+	p.total = SumInt(values...)
 	if p.total == 0 {
 		return
 	}
@@ -323,7 +323,7 @@ func (p *PieChart) setColors(colorPairs []string) error {
 	}
 	p.colors = make([]nc.Char, 0, len(colorPairs))
 	for _, colorPair := range colorPairs {
-		color, err := parseColorPair(colorPair)
+		color, err := ParseColorPair(colorPair)
 		if err != nil {
 			return err
 		}
@@ -409,7 +409,7 @@ func NewLineEdit(menu Menu, y, x int, text string, maxLength int, textColor stri
 	result.data = createUIED(y, x)
 	result.let = CreateLineEditTemplate(text, maxLength)
 	var err error
-	result.tcolor, err = parseColorPair(textColor)
+	result.tcolor, err = ParseColorPair(textColor)
 	if err != nil {
 		return nil, err
 	}
@@ -509,7 +509,7 @@ func (l *List) SetOptions(options []DrawableAsLine) {
 		if i == 0 {
 			continue
 		}
-		l.maxWidth = maxInt(l.maxWidth, o.Length())
+		l.maxWidth = MaxInt(l.maxWidth, o.Length())
 	}
 }
 
@@ -543,7 +543,7 @@ func (l List) drawScroller(win *nc.Window) error {
 		// MessageBox(&Window{win: win}, l.bcolor, []string{}, "normal")
 		colorPair := ReverseColorPair(l.bcolor)
 		// MessageBox(&Window{win: win}, colorPair, []string{}, "normal")
-		color, err := parseColorPair(colorPair)
+		color, err := ParseColorPair(colorPair)
 		if err != nil {
 			return err
 		}

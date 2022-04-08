@@ -11,9 +11,12 @@ const (
 	xOffset       = 1
 	hightlightKey = nc.A_REVERSE
 
-	KeyEnter = 10
-	KeyLeft  = nc.KEY_LEFT
-	KeyRight = nc.KEY_RIGHT
+	KeyEnter  = 10
+	KeyLeft   = nc.KEY_LEFT
+	KeyRight  = nc.KEY_RIGHT
+	KeyUp     = nc.KEY_UP
+	KeyDown   = nc.KEY_DOWN
+	KeyEscape = nc.KEY_ESC
 )
 
 type hasElementData interface {
@@ -151,7 +154,7 @@ func (m *NormalMenu) HandleKey(key nc.Key) error {
 				elData.focused = false
 				elData.prev.GetElementData().focused = true
 			default:
-				el.HandleKey(key)
+				return el.HandleKey(key)
 			}
 			break
 		}
@@ -253,11 +256,10 @@ func createUIED(y, x int) *UIElementData {
 
 // Standard window
 type Window struct {
-	height      int
-	width       int
-	running     bool
-	currentMenu Menu
-	win         *nc.Window
+	height, width int
+	running       bool
+	currentMenu   Menu
+	win           *nc.Window
 }
 
 // Returns the current menu of the window

@@ -41,7 +41,7 @@ func CreateListTemplate(options []DrawableAsLine, maxDisplayAmount int) *ListTem
 
 // Draws the list tamplate
 func (l ListTemplate) Draw(win *nc.Window, y, x int, focusSelected bool) error {
-	for i := 0; i < minInt(l.maxDisplayAmount, len(l.options)); i++ {
+	for i := 0; i < MinInt(l.maxDisplayAmount, len(l.options)); i++ {
 		attr := nc.A_NORMAL
 		if i == l.cursor && focusSelected {
 			attr = nc.A_REVERSE
@@ -108,6 +108,11 @@ func (l *ListTemplate) ScrollDown() {
 			l.choice = 0
 		}
 	}
+}
+
+// Returns the selected element
+func (l ListTemplate) GetSelected() DrawableAsLine {
+	return l.options[l.choice]
 }
 
 // Line edit template. Use for drawing and interacting with writable lines
@@ -184,6 +189,11 @@ func (l *LineEditTemplate) SetText(text string) error {
 	return nil
 }
 
+// Returns the text of the line edit
+func (l LineEditTemplate) GetText() string {
+	return l.content
+}
+
 // Word choice template use for prompting user to pick a word from options
 type WordChoiceTemplate struct {
 	options []*CCTMessage
@@ -210,10 +220,10 @@ func CreateWordChoiceTemplate(options []string, alignment Alignment, arrowColor 
 		if i == 0 {
 			continue
 		}
-		result.maxLen = maxInt(result.maxLen, o.Length())
+		result.maxLen = MaxInt(result.maxLen, o.Length())
 	}
 	result.al = alignment
-	result.acolor, err = parseColorPair(arrowColor)
+	result.acolor, err = ParseColorPair(arrowColor)
 	return &result, err
 }
 
@@ -281,11 +291,11 @@ func CreateProgressBarTemplate(barLength, max int, showInfo bool, barColor strin
 	result.max = max
 	result.current = 0
 	var err error
-	result.bcolor, err = parseColorPair(barColor)
+	result.bcolor, err = ParseColorPair(barColor)
 	if err != nil {
 		return nil, err
 	}
-	result.icolor, err = parseColorPair(infoColor)
+	result.icolor, err = ParseColorPair(infoColor)
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +331,7 @@ func (p ProgressBarTemplate) Draw(win *nc.Window, y, x int) error {
 	// draw the bar
 	l := p.current * p.barLength / p.max
 	s := strings.Repeat(string(progressBarUnit), l)
-	put(win, y, x+1, s, p.bcolor)
+	Put(win, y, x+1, s, p.bcolor)
 	return nil
 
 }

@@ -62,7 +62,7 @@ func (m CCTMessage) Length() int {
 	return result
 }
 
-// Converts the cct string
+// Converts the cct string to string format
 func (m CCTMessage) ToString() string {
 	result := ""
 	reverseColorMap := map[nc.Char]string{}
@@ -75,17 +75,26 @@ func (m CCTMessage) ToString() string {
 	return result
 }
 
+// Converts the cct string to raw string
+func (m CCTMessage) ToRawString() string {
+	result := ""
+	for _, me := range m.strings {
+		result += me
+	}
+	return result
+}
+
 // Draws the CCTMessage
 func (m CCTMessage) Draw(win *nc.Window, y, x int, attr ...nc.Char) {
 	for i := 0; i < m.pairCount(); i++ {
 		s, color := m.pair(i)
-		put(win, y, x, s, append(attr, color)...)
+		Put(win, y, x, s, append(attr, color)...)
 		x += len(s)
 	}
 }
 
 // Parses the colors. If colorPair doesn't exist yet, initializes it
-func parseColorPair(colorPair string) (nc.Char, error) {
+func ParseColorPair(colorPair string) (nc.Char, error) {
 	originalColorPair := colorPair
 	if !strings.ContainsRune(colorPair, '-') {
 		colorPair += "-normal"
@@ -144,7 +153,7 @@ func ToCCTMessage(line string) (*CCTMessage, error) {
 	for _, match := range matches {
 		colorPair := match[1]
 		s := match[2]
-		colorKey, err := parseColorPair(colorPair)
+		colorKey, err := ParseColorPair(colorPair)
 		if err != nil {
 			return nil, err
 		}

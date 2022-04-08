@@ -16,22 +16,38 @@ const (
 	MultipleElements
 )
 
+var (
+	allowedRanges = [][2]rune{
+		{'a', 'z'},
+		{'A', 'Z'},
+		{'0', '9'},
+	}
+	allowedSingles = []rune{
+		'=',
+		'"',
+		' ',
+	}
+)
+
 // Checks whether the character can be added to the line edit template
+//
+// Returns true if the character was added
 func isValidLineEditCh(ch rune) bool {
-	if ch >= 'a' && ch <= 'z' {
-		return true
+	for _, ar := range allowedRanges {
+		if ch >= ar[0] && ch <= ar[1] {
+			return true
+		}
 	}
-	if ch >= 'A' && ch <= 'Z' {
-		return true
+	for _, as := range allowedSingles {
+		if ch == as {
+			return true
+		}
 	}
-	if ch >= '0' && ch <= '9' {
-		return true
-	}
-	return ch == ' '
+	return false
 }
 
 // Returns the max element
-func maxInt(a ...int) int {
+func MaxInt(a ...int) int {
 	result := a[0]
 	for _, v := range a {
 		if v > result {
@@ -42,7 +58,7 @@ func maxInt(a ...int) int {
 }
 
 // Returns the min element
-func minInt(a ...int) int {
+func MinInt(a ...int) int {
 	result := a[0]
 	for _, v := range a {
 		if v < result {
@@ -53,7 +69,7 @@ func minInt(a ...int) int {
 }
 
 // Returns the sum of all the elements
-func sumInt(a ...int) int {
+func SumInt(a ...int) int {
 	result := 0
 	for _, i := range a {
 		result += i
@@ -62,7 +78,7 @@ func sumInt(a ...int) int {
 }
 
 // More convinient way to add to window with multiple attributes
-func put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
+func Put(win *nc.Window, y, x int, line string, attrs ...nc.Char) {
 	for _, attr := range attrs {
 		win.AttrOn(attr)
 		defer win.AttrOff(attr)
@@ -84,7 +100,7 @@ func ReverseColorPair(colorPair string) string {
 
 // Draws a box
 func DrawBox(win *nc.Window, y, x, height, width int, borderColor string) error {
-	bcolor, err := parseColorPair(borderColor)
+	bcolor, err := ParseColorPair(borderColor)
 	if err != nil {
 		return err
 	}
@@ -108,7 +124,7 @@ func DrawBox(win *nc.Window, y, x, height, width int, borderColor string) error 
 // Draws the borders of the window
 func DrawBorders(win *nc.Window, colorPair string) error {
 	var err error
-	color, err := parseColorPair(colorPair)
+	color, err := ParseColorPair(colorPair)
 	if err != nil {
 		return err
 	}
@@ -155,7 +171,7 @@ func MessageBox(parent *Window, message string, choices []string, borderColor st
 	for _, ch := range cctChoices {
 		choicesLen += ch.Length()
 	}
-	wwidth := maxInt(choicesLen, cctMessage.Length()+4)
+	wwidth := MaxInt(choicesLen, cctMessage.Length()+4)
 	wheight := 7
 	ypos := (height - wheight) / 2
 	xpos := (width - wwidth) / 2
@@ -176,12 +192,12 @@ func MessageBox(parent *Window, message string, choices []string, borderColor st
 	for !done {
 		// draw
 		pos := 3
-		put(win, wheight-3, 1, whiteSpace)
+		Put(win, wheight-3, 1, whiteSpace)
 		for i, choice := range cctChoices {
 			// nc.Flash()
 			sl := choice.Length()
 			if i == choiceID {
-				put(win, wheight-3, pos-2, "["+strings.Repeat(" ", sl)+"]")
+				Put(win, wheight-3, pos-2, "["+strings.Repeat(" ", sl)+"]")
 			}
 			choice.Draw(win, wheight-3, pos-1)
 			// put(win, wheight-3, pos-1, s)
@@ -247,7 +263,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 	}
 	lt := CreateListTemplate(moptions, maxDisplayAmount)
 	whiteSpace := strings.Repeat(" ", width-2)
-	bc, err := parseColorPair(borderColor)
+	bc, err := ParseColorPair(borderColor)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +274,7 @@ func DropDownBox(options []string, maxDisplayAmount, y, x int, choiceType DDBCho
 		win.MoveAddChar(height-2, width-1, nc.ACS_VLINE)
 		win.AttrOff(bc)
 		for i := 1; i < height-1; i++ {
-			put(win, i, 1, whiteSpace)
+			Put(win, i, 1, whiteSpace)
 		}
 		// draw
 		lt.Draw(win, 1, 1, true)
