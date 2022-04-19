@@ -22,17 +22,19 @@ var (
 	cctregex = regexp.MustCompile(rawcctregex)
 
 	colors = map[string]int16{
-		"red":     nc.C_RED,
-		"blue":    nc.C_BLUE,
-		"green":   nc.C_GREEN,
-		"black":   nc.C_BLACK,
-		"yellow":  nc.C_YELLOW,
-		"cyan":    nc.C_CYAN,
-		"magenta": nc.C_MAGENTA,
-		"white":   nc.C_WHITE,
-		"gray":    245,
-		"pink":    219,
-		"orange":  202,
+		"red":        nc.C_RED,
+		"blue":       nc.C_BLUE,
+		"green":      nc.C_GREEN,
+		"black":      nc.C_BLACK,
+		"yellow":     nc.C_YELLOW,
+		"cyan":       nc.C_CYAN,
+		"magenta":    nc.C_MAGENTA,
+		"white":      nc.C_WHITE,
+		"gray":       245,
+		"pink":       219,
+		"orange":     202,
+		"darkyellow": 58,
+		"darkgray":   234,
 	}
 	colorMap = map[string]nc.Char{}
 )

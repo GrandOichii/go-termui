@@ -128,7 +128,7 @@ func CreateLineEditTemplate(text string, maxLen int) *LineEditTemplate {
 	result := LineEditTemplate{}
 	result.cursor = 0
 	result.content = text
-	result.blank = strings.Repeat("_", maxLen)
+	result.blank = strings.Repeat(" ", maxLen)
 	result.maxLen = maxLen
 	return &result
 }

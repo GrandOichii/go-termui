@@ -190,6 +190,12 @@ func (m *NormalMenu) SetParent(window *Window) {
 	m.parent = window
 }
 
+// Clears all the UIElements
+func (m *NormalMenu) ClearElements() {
+	m.elements = []UIElement{}
+	m.focusedElID = 0
+}
+
 // A UI element
 type UIElement interface {
 	hasElementData
